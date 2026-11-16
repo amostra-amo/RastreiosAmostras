@@ -41,6 +41,51 @@
 
 
 /* =========================================================
+   SESSÃO NAS CHAMADAS AO BACKEND
+   Endpoints protegidos (permissões, usuários, presença)
+   exigem o login. Este trecho anexa o token da sessão
+   automaticamente, sem precisar mudar cada chamada.
+========================================================= */
+
+(function anexarSessaoNasChamadas() {
+    if (window.__fetchComSessao) return;
+    window.__fetchComSessao = true;
+
+    const BACKEND = "https://rastreio-amostras-backend-production.up.railway.app";
+    const PROTEGIDOS = /\/(permissoes|vendedores|usuarios)(\/|\?|$)|\/presenca(\?|$)/;
+    const fetchOriginal = window.fetch.bind(window);
+
+    window.fetch = function (recurso, opcoes = {}) {
+        try {
+            const url = typeof recurso === "string" ? recurso : (recurso && recurso.url) || "";
+
+            if (url.startsWith(BACKEND) && PROTEGIDOS.test(url.slice(BACKEND.length))) {
+                const token =
+                    sessionStorage.getItem("app_session_token") ||
+                    localStorage.getItem("app_session_token") ||
+                    "";
+
+                if (token) {
+                    const headers = new Headers(
+                        opcoes.headers ||
+                        (recurso instanceof Request ? recurso.headers : undefined)
+                    );
+
+                    if (!headers.has("Authorization")) {
+                        headers.set("Authorization", "Bearer " + token);
+                    }
+
+                    opcoes = { ...opcoes, headers };
+                }
+            }
+        } catch (erro) {}
+
+        return fetchOriginal(recurso, opcoes);
+    };
+})();
+
+
+/* =========================================================
    CONFIG
 ========================================================= */
 

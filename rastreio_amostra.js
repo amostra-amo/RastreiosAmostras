@@ -1,4 +1,46 @@
 /* =========================================================
+   CONSOLE EM PRODUÇÃO
+   As mensagens de depuração ficam desligadas para os usuários.
+   Para ver de novo (suporte), abra a página com ?debug=1
+   ou rode no console: localStorage.setItem("debugRastreio", "1")
+========================================================= */
+
+(function prepararConsole() {
+    let modoDebug = false;
+
+    try {
+        modoDebug =
+            new URLSearchParams(window.location.search).has("debug") ||
+            localStorage.getItem("debugRastreio") === "1";
+    } catch (erro) {
+        modoDebug = false;
+    }
+
+    if (modoDebug) return;
+
+    try {
+        console.log(
+            "%cAtenção",
+            "color:#dc2626;font-size:22px;font-weight:bold;"
+        );
+        console.log(
+            "%cEsta área é destinada a desenvolvedores. Não cole aqui códigos enviados por terceiros: isso pode dar acesso à sua conta.",
+            "font-size:13px;"
+        );
+    } catch (erro) {}
+
+    const silencioso = function () {};
+
+    ["log", "info", "debug", "table", "group", "groupCollapsed", "groupEnd", "warn", "trace", "dir"]
+        .forEach(metodo => {
+            try {
+                console[metodo] = silencioso;
+            } catch (erro) {}
+        });
+})();
+
+
+/* =========================================================
    CONFIG
 ========================================================= */
 
@@ -893,20 +935,6 @@ const nomeVendedorLogado =
     codigoVendedorLogado;
 
 
-console.log(
-    "Usuário logado:",
-    usuarioOriginal
-);
-
-console.log(
-    "Código vendedor:",
-    codigoVendedorLogado
-);
-
-console.log(
-    "Nome encontrado na planilha:",
-    nomeVendedorLogado
-);
 
 
 const nomeCompleto =
@@ -2159,7 +2187,7 @@ function atualizarNotificacoes() {
 
 
         const situacaoTexto =
-            obterDescricaoLinha(l);
+            escaparHTML(obterDescricaoLinha(l));
 
 
         const div =
@@ -2197,7 +2225,7 @@ function atualizarNotificacoes() {
             <br>
 
             <strong>Situação:</strong>
-            ${obterDescricaoLinha(l)}
+            ${escaparHTML(obterDescricaoLinha(l))}
         `;
 
 
@@ -3220,8 +3248,7 @@ function renderizar(lista) {
 
 
         const rastreio =
-            l[1] ||
-            "Não informado";
+            String(l[1] || "Não informado").replace(/[^0-9A-Za-zÀ-ÿ ]/g, "");
 
 
         const labelNota =
@@ -3286,21 +3313,19 @@ function renderizar(lista) {
 
 
         const codigoCliente =
-            l[18] || "-";
+            escaparHTML(l[18] || "-");
 
 
         const nomeCliente =
-            l[19] ||
-            l[7] ||
-            "-";
+            escaparHTML(l[19] || l[7] || "-");
 
 
         const numeroRepresentante =
-            l[20] || "-";
+            escaparHTML(l[20] || "-");
 
 
         const nomeRepresentante =
-            l[21] || "-";
+            escaparHTML(l[21] || "-");
 
 
         const card =
@@ -3314,7 +3339,7 @@ function renderizar(lista) {
 
 
         const situacaoTexto =
-            obterDescricaoLinha(l);
+            escaparHTML(obterDescricaoLinha(l));
 
 
         const dataStatus =
@@ -3434,11 +3459,11 @@ function renderizar(lista) {
 
 
         const codigoVendedorCard =
-            l[22] || "-";
+            escaparHTML(l[22] || "-");
 
 
         const nomeVendedorCard =
-            l[23] || "-";
+            escaparHTML(l[23] || "-");
 
 
         card.innerHTML = `
@@ -3464,7 +3489,7 @@ function renderizar(lista) {
                     </strong>
 
                     <span>
-                        ${notasUnicas.join(" / ")}
+                        ${notasUnicas.map(escaparHTML).join(" / ")}
                     </span>
 
                 </div>
@@ -3477,7 +3502,7 @@ function renderizar(lista) {
                     </strong>
 
                     <span>
-                        ${pedidosUnicos.join(" / ")}
+                        ${pedidosUnicos.map(escaparHTML).join(" / ")}
                     </span>
 
                 </div>
@@ -3747,34 +3772,31 @@ function abrirDetalhes(grupo) {
 
 
     const uf =
-        l[11] || "-";
+        escaparHTML(l[11] || "-");
 
 
     const estado =
-        l[12] || "-";
+        escaparHTML(l[12] || "-");
 
 
     const codigoCliente =
-        l[18] || "-";
+        escaparHTML(l[18] || "-");
 
 
     const nomeCliente =
-        l[19] ||
-        l[7] ||
-        "-";
+        escaparHTML(l[19] || l[7] || "-");
 
 
     const numeroRepresentante =
-        l[20] || "-";
+        escaparHTML(l[20] || "-");
 
 
     const nomeRepresentante =
-        l[21] || "-";
+        escaparHTML(l[21] || "-");
 
 
     const rastreio =
-        l[1] ||
-        "Não informado";
+        String(l[1] || "Não informado").replace(/[^0-9A-Za-zÀ-ÿ ]/g, "");
 
 
     const temScroll =
@@ -3815,7 +3837,7 @@ function abrirDetalhes(grupo) {
                         ${labelNota}:
                     </strong>
 
-                    ${notasUnicas.join(" / ")}
+                    ${notasUnicas.map(escaparHTML).join(" / ")}
 
                 </span>
 
@@ -3826,7 +3848,7 @@ function abrirDetalhes(grupo) {
                         ${labelPedido}:
                     </strong>
 
-                    ${pedidosUnicos.join(" / ")}
+                    ${pedidosUnicos.map(escaparHTML).join(" / ")}
 
                 </span>
 
@@ -3928,7 +3950,7 @@ function abrirDetalhes(grupo) {
                         : ""
                 }">
 
-                    ${obterDescricaoLinha(l)}
+                    ${escaparHTML(obterDescricaoLinha(l))}
 
                 </span>
 
@@ -4014,7 +4036,7 @@ function abrirDetalhes(grupo) {
                         .map(
                             i =>
                                 `<li>
-                                    ${formatarAmostraDetalhe(i)}
+                                    ${escaparHTML(formatarAmostraDetalhe(i))}
                                 </li>`
                         )
                         .join("")
@@ -4046,6 +4068,11 @@ function abrirDetalhes(grupo) {
             "";
 
     }
+
+
+    // Sempre abre no topo, com o botão fechar no cabeçalho
+    conteudoDetalhes.scrollTop = 0;
+    posicionarFecharDetalhes();
 
 
     overlay.classList.add(
@@ -4130,6 +4157,17 @@ function voltarParaNotificacoes() {
 /* =========================================================
    FECHAR DETALHES
 ========================================================= */
+
+/* O botão fechar fica no cabeçalho e sobe junto ao rolar */
+function posicionarFecharDetalhes() {
+    const botao = overlay?.querySelector(".painel-detalhes .fechar");
+    if (!botao || !conteudoDetalhes) return;
+    botao.style.transform = `translateY(${-conteudoDetalhes.scrollTop}px)`;
+}
+
+if (conteudoDetalhes) {
+    conteudoDetalhes.addEventListener("scroll", posicionarFecharDetalhes, { passive: true });
+}
 
 function fecharDetalhes() {
 

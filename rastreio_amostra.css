@@ -6189,45 +6189,41 @@ body.menu-sidebar-aberto {
 }
 
 /* =========================================================
-   SIDEBAR ESCURA — COMBINA COM A TOPBAR (nov/2026)
-   Bloco final: sobrescreve só as cores da barra lateral,
-   do botão de menu e do painel aberto. Usa as cores do
-   tema (--cor-sidebar), então funciona em todas as marcas.
-   Para voltar ao visual claro, apague este bloco.
+   SIDEBAR CLARA NO TOM DO TEMA (nov/2026)
+   Vidro claro levemente tingido com a cor da marca
+   (--cor-sidebar), ícones na cor do tema e item atual
+   preenchido. Para voltar ao visual anterior, apague este bloco.
 ========================================================= */
 
-body .sidebar-video-integrada {
-    --sb-fundo: color-mix(in srgb, var(--cor-sidebar, #173b68) 78%, rgba(6, 18, 36, .55));
-    --sb-fundo-painel: color-mix(in srgb, var(--cor-sidebar, #173b68) 90%, #06121f);
-    --sb-borda: rgba(255, 255, 255, .10);
-    --sb-icone: rgba(255, 255, 255, .70);
-    --sb-hover: rgba(255, 255, 255, .10);
-    --sb-ativo: rgba(255, 255, 255, .17);
-    --sb-indicador: var(--cor-sidebar-indicador, #6fa4e8);
+body .sidebar-video-integrada,
+body .topbar-sidebar-menu-wrap {
+    --sb-cor: var(--cor-sidebar, #173b68);
+    --sb-fundo: color-mix(in srgb, var(--sb-cor) 14%, rgba(246, 248, 252, .94));
+    --sb-fundo-painel: color-mix(in srgb, var(--sb-cor) 8%, #f8fafd);
+    --sb-borda: color-mix(in srgb, var(--sb-cor) 16%, rgba(255, 255, 255, .7));
+    --sb-icone: color-mix(in srgb, var(--sb-cor) 78%, #334155);
+    --sb-hover: color-mix(in srgb, var(--sb-cor) 12%, #ffffff);
+    --sb-texto: #1e293b;
+    --sb-texto-suave: #64748b;
 }
 
-/* Faixa de atalhos */
+/* Faixa de atalhos e caixa do botão de menu */
 body .sidebar-video-integrada .sidebar-video-rail,
 body .topbar-sidebar-menu-wrap {
-    background: var(--sb-fundo, rgba(23, 59, 104, .82)) !important;
-    border: 1px solid var(--sb-borda, rgba(255,255,255,.10)) !important;
+    background: var(--sb-fundo) !important;
+    border: 1px solid var(--sb-borda) !important;
     box-shadow:
-        0 18px 40px rgba(2, 8, 23, .35),
-        inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+        0 16px 36px rgba(2, 8, 23, .18),
+        inset 0 1px 0 rgba(255, 255, 255, .7) !important;
     backdrop-filter: blur(16px) saturate(140%);
     -webkit-backdrop-filter: blur(16px) saturate(140%);
-}
-
-/* O botão de menu fica fora do .sidebar, então repete as variáveis */
-body .topbar-sidebar-menu-wrap {
-    background: color-mix(in srgb, var(--cor-sidebar, #173b68) 78%, rgba(6, 18, 36, .55)) !important;
 }
 
 /* Ícones */
 body .sidebar-video-integrada .sidebar-video-rail-btn,
 body .sidebar-video-integrada .sidebar-video-rail-btn:not(.desativado),
 body .topbar-sidebar-menu-btn {
-    color: rgba(255, 255, 255, .72) !important;
+    color: var(--sb-icone) !important;
     background: transparent !important;
     border-color: transparent !important;
     box-shadow: none !important;
@@ -6236,134 +6232,116 @@ body .topbar-sidebar-menu-btn {
 body .sidebar-video-integrada .sidebar-video-rail-btn:not(.desativado):hover,
 body .topbar-sidebar-menu-btn:hover,
 body .topbar-sidebar-menu-btn[aria-expanded="true"] {
-    color: #ffffff !important;
-    background: rgba(255, 255, 255, .10) !important;
-    border-color: rgba(255, 255, 255, .12) !important;
-    box-shadow: none !important;
+    color: var(--sb-cor) !important;
+    background: var(--sb-hover) !important;
+    border-color: color-mix(in srgb, var(--sb-cor) 18%, #ffffff) !important;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, .08) !important;
 }
 
-/* Página atual: fundo claro sutil + traço de cor à esquerda */
+/* Página atual: botão preenchido na cor do tema */
 body .sidebar-video-integrada .sidebar-video-rail-btn.ativo:not(.desativado) {
     color: #ffffff !important;
-    background: rgba(255, 255, 255, .17) !important;
-    border-color: rgba(255, 255, 255, .16) !important;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .10) !important;
+    background: var(--sb-cor) !important;
+    border-color: transparent !important;
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--sb-cor) 40%, transparent) !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-rail-btn.ativo::before {
-    display: block;
-    content: "";
-    position: absolute;
-    left: -9px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 22px;
-    border-radius: 99px;
-    background: var(--sb-indicador, #6fa4e8);
-    box-shadow: 0 0 10px var(--sb-indicador, #6fa4e8);
-}
-
-/* Bolinhas acima do botão de menu */
-body .topbar-sidebar-dots span:nth-child(1) {
-    background: var(--cor-sidebar-indicador, #6fa4e8);
+    display: none;
 }
 
 /* Separador e botão Sair */
 body .sidebar-video-integrada .sidebar-video-rail-bottom {
-    border-top: 1px solid rgba(255, 255, 255, .12) !important;
+    border-top: 1px solid color-mix(in srgb, var(--sb-cor) 14%, transparent) !important;
 }
 
 body .sidebar-video-integrada #btnLogoutRail:hover {
-    color: #fecaca !important;
-    background: rgba(239, 68, 68, .22) !important;
-    border-color: rgba(239, 68, 68, .35) !important;
+    color: #dc2626 !important;
+    background: #fee2e2 !important;
+    border-color: rgba(220, 38, 38, .18) !important;
 }
 
-/* Rótulo ao passar o mouse: claro, para contrastar com a barra escura */
+/* Rótulo ao passar o mouse */
 body .sidebar-video-integrada .sidebar-video-rail-btn[data-tooltip]::after {
-    background: #ffffff;
-    color: #0f2747;
-    box-shadow: 0 10px 24px rgba(2, 8, 23, .35);
+    background: #0f172a;
+    color: #ffffff;
 }
 
 /* ---------------- Painel aberto (☰) ---------------- */
 
 body .sidebar-video-integrada .sidebar-video-panel {
-    background: var(--sb-fundo-painel, #12304f) !important;
-    border: 1px solid var(--sb-borda, rgba(255,255,255,.10)) !important;
-    box-shadow: 0 24px 60px rgba(2, 8, 23, .45) !important;
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    background: var(--sb-fundo-painel) !important;
+    border: 1px solid var(--sb-borda) !important;
+    box-shadow: 0 24px 60px rgba(2, 8, 23, .25) !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-brand-title,
 body .sidebar-video-integrada .sidebar-video-profile-text strong {
-    color: #ffffff !important;
+    color: var(--sb-texto) !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-brand-subtitle,
 body .sidebar-video-integrada .sidebar-video-profile-text small {
-    color: rgba(255, 255, 255, .58) !important;
+    color: var(--sb-texto-suave) !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-item:not(.desativado) {
-    color: rgba(255, 255, 255, .86) !important;
+    color: var(--sb-texto) !important;
     background: transparent !important;
     border-color: transparent !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-item:not(.desativado) .sidebar-video-icon {
-    color: rgba(255, 255, 255, .80) !important;
-    background: rgba(255, 255, 255, .08) !important;
+    color: var(--sb-icone) !important;
+    background: color-mix(in srgb, var(--sb-cor) 9%, #ffffff) !important;
     border-color: transparent !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-item:not(.desativado) .sidebar-video-item-text strong {
-    color: #ffffff !important;
+    color: var(--sb-texto) !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-item:not(.desativado) .sidebar-video-item-text small,
 body .sidebar-video-integrada .sidebar-video-arrow {
-    color: rgba(255, 255, 255, .55) !important;
+    color: var(--sb-texto-suave) !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-item:not(.desativado):hover {
-    background: rgba(255, 255, 255, .08) !important;
-    border-color: rgba(255, 255, 255, .10) !important;
+    background: color-mix(in srgb, var(--sb-cor) 7%, #ffffff) !important;
+    border-color: color-mix(in srgb, var(--sb-cor) 14%, #ffffff) !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-item:not(.desativado):hover .sidebar-video-icon {
-    color: #ffffff !important;
-    background: rgba(255, 255, 255, .14) !important;
+    color: var(--sb-cor) !important;
+    background: #ffffff !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) {
-    background: rgba(255, 255, 255, .14) !important;
-    border-color: rgba(255, 255, 255, .16) !important;
-    box-shadow: inset 3px 0 0 var(--sb-indicador, #6fa4e8);
+    background: color-mix(in srgb, var(--sb-cor) 12%, #ffffff) !important;
+    border-color: color-mix(in srgb, var(--sb-cor) 22%, #ffffff) !important;
+    box-shadow: inset 3px 0 0 var(--sb-cor);
+}
+
+body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado),
+body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) .sidebar-video-item-text strong {
+    color: var(--sb-cor) !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) .sidebar-video-icon {
     color: #ffffff !important;
-    background: color-mix(in srgb, var(--sb-indicador, #6fa4e8) 45%, transparent) !important;
-}
-
-body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) .sidebar-video-item-text small,
-body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) .sidebar-video-arrow {
-    color: rgba(255, 255, 255, .75) !important;
+    background: var(--sb-cor) !important;
 }
 
 body .sidebar-video-integrada .sidebar-video-divider {
-    background: rgba(255, 255, 255, .10) !important;
+    background: color-mix(in srgb, var(--sb-cor) 12%, transparent) !important;
 }
 
 /* Perfil no rodapé do menu: fundo sólido, os itens rolam por trás */
 body .sidebar-video-integrada .sidebar-video-profile {
-    background: color-mix(in srgb, var(--sb-fundo-painel, #12304f) 88%, #ffffff) !important;
-    border: 1px solid rgba(255, 255, 255, .12) !important;
+    background: #ffffff !important;
+    border: 1px solid color-mix(in srgb, var(--sb-cor) 14%, #ffffff) !important;
     border-radius: 14px;
-    box-shadow: 0 -10px 18px var(--sb-fundo-painel, #12304f);
+    box-shadow: 0 -10px 18px var(--sb-fundo-painel), 0 4px 12px rgba(15, 23, 42, .06);
     z-index: 2;
 }
 
@@ -6376,23 +6354,13 @@ body .sidebar-video-integrada .sidebar-video-profile-text small {
 }
 
 body .sidebar-video-integrada .sidebar-video-avatar {
-    background: var(--sb-indicador, #6fa4e8);
+    background: var(--sb-cor);
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-nav {
     padding-bottom: 84px;
-    scrollbar-color: rgba(255, 255, 255, .22) transparent;
 }
 
-body .sidebar-video-integrada .sidebar-video-panel-nav::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, .18);
-}
-
-
-body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) .sidebar-video-item-text strong,
-body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) {
-    color: #ffffff !important;
-}
 
 /* =========================================================
    PAINÉIS DOS CARDS — DETALHES E HISTÓRICO (nov/2026)
@@ -6432,11 +6400,11 @@ body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) {
 }
 
 #overlayDetalhes .icone-envio-detalhes {
-    top: 23px !important;
+    top: 19px !important;
     right: 66px !important;
     width: auto !important;
-    height: 24px !important;
-    max-width: 110px;
+    height: 32px !important;
+    max-width: 140px;
     object-fit: contain;
     opacity: 1 !important;
 }

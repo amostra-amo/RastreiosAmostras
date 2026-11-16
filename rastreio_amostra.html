@@ -483,8 +483,8 @@
                 aria-live="polite"
                 aria-label="Atualizar rastreios dos Correios"
                 title="Clique para atualizar os rastreios novamente"
-                onclick="atualizarRastreiosAgora()"
-                onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); atualizarRastreiosAgora(); }"
+                onclick="atualizarRastreiosAgora(true)"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); atualizarRastreiosAgora(true); }"
             >
                 <div class="status-atualizacao-info">
                     <span id="statusAtualizacaoIcone" class="status-atualizacao-icone">↻</span>

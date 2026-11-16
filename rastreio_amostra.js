@@ -326,7 +326,28 @@ async function executarComConcorrencia(itens, limite, tarefa) {
     await Promise.all(trabalhadores);
 }
 
-async function carregarStatusCorreios() {
+function horaAgoraCurta() {
+    return new Date().toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+}
+
+function mostrarRastreiosAtualizadosTopbar() {
+    definirStatusAtualizacaoTopbar(
+        "concluido",
+        "Rastreios atualizados",
+        `Última verificação ${horaAgoraCurta()}`,
+        100
+    );
+}
+
+async function carregarStatusCorreios(opcoes = {}) {
+    // mostrarProgresso = true somente quando o usuário clica no status
+    // da topbar. Na abertura da página e na atualização automática, os
+    // códigos já conhecidos são atualizados em silêncio.
+    const mostrarProgresso = opcoes.mostrarProgresso === true;
+
     const grupos = agruparPorRastreio(dadosVendedora);
     const codigos = [
         ...new Set(
@@ -342,29 +363,55 @@ async function carregarStatusCorreios() {
         return;
     }
 
-    iniciarProgressoCorreiosTopbar(codigos.length);
-
     const cacheStatus = lerCacheJSON(CACHE_STATUS_CORREIOS_KEY, {});
+    const entreguesCache = obterCodigosEntreguesCache();
 
-    // O cache serve apenas para preencher a tela imediatamente. Todos os
-    // códigos são consultados novamente, inclusive os já entregues, para
-    // que a faixa lateral do card sempre receba o último evento da API.
+    // Preenche a tela na hora com o último status conhecido.
     codigos.forEach(codigo => {
         if (cacheStatus[codigo]) {
             statusCorreios.set(codigo, cacheStatus[codigo]);
         }
     });
 
-    const pendentes = codigos;
+    // Entregue não muda mais: não consulta de novo.
+    // Só pendentes, retornados e códigos novos vão para a API.
+    const aConsultar = codigos.filter(codigo => {
+        const status = cacheStatus[codigo];
+        if (status?.situacao === "ENTREGUE") return false;
+        if (!status && entreguesCache.has(codigo)) return false;
+        return true;
+    });
+
+    // Códigos que nunca foram consultados neste navegador: só eles
+    // aparecem na barra de progresso (exceto em atualização manual).
+    const novos = new Set(
+        aConsultar.filter(codigo => !cacheStatus[codigo])
+    );
+
+    const totalVisivel = mostrarProgresso ? aConsultar.length : novos.size;
+
+    if (totalVisivel > 0) {
+        iniciarProgressoCorreiosTopbar(totalVisivel);
+    } else {
+        mostrarRastreiosAtualizadosTopbar();
+    }
+
+    // Mostra os status do cache imediatamente.
+    filtrar();
+    atualizarNotificacoes();
 
     console.log(
-        `📦 Correios: ${codigos.length} rastreios encontrados; ${pendentes.length} serão atualizados pela API.`
+        `📦 Correios: ${codigos.length} rastreios; ${codigos.length - aConsultar.length} entregues (sem consulta); ${aConsultar.length} serão atualizados (${novos.size} novos).`
     );
+
+    if (!aConsultar.length) {
+        return;
+    }
 
     let concluidos = 0;
 
     await executarComConcorrencia(
-        pendentes,
+        aConsultar,
         CONCORRENCIA_CORREIOS,
         async codigo => {
             let erroConsulta = false;
@@ -402,19 +449,21 @@ async function carregarStatusCorreios() {
             } finally {
                 concluidos++;
 
-                // Atualiza o progresso da topbar a cada resposta da API.
-                registrarProgressoCorreiosTopbar(erroConsulta);
-
-                // Atualiza os cards conforme os rastreios respondem, sem
-                // esperar as centenas de consultas restantes.
-                if (concluidos % 8 === 0 || concluidos === pendentes.length) {
-                    filtrar();
-                    atualizarNotificacoes();
+                if (mostrarProgresso || novos.has(codigo)) {
+                    registrarProgressoCorreiosTopbar(erroConsulta);
                 }
 
-                if (concluidos % 25 === 0 || concluidos === pendentes.length) {
+                // Atualiza os cards e salva o cache aos poucos, para não
+                // perder o que já foi consultado se a página for fechada.
+                if (concluidos % 8 === 0 || concluidos === aConsultar.length) {
+                    filtrar();
+                    atualizarNotificacoes();
+                    salvarCacheJSON(CACHE_STATUS_CORREIOS_KEY, cacheStatus);
+                }
+
+                if (concluidos % 25 === 0 || concluidos === aConsultar.length) {
                     console.log(
-                        `📦 Correios: ${concluidos}/${pendentes.length} consultas concluídas.`
+                        `📦 Correios: ${concluidos}/${aConsultar.length} consultas concluídas.`
                     );
                 }
             }
@@ -422,6 +471,10 @@ async function carregarStatusCorreios() {
     );
 
     salvarCacheJSON(CACHE_STATUS_CORREIOS_KEY, cacheStatus);
+
+    if (totalVisivel === 0) {
+        mostrarRastreiosAtualizadosTopbar();
+    }
 }
 
 function obterSituacaoLinha(linha) {
@@ -542,7 +595,7 @@ let progressoCorreiosTopbar = {
 
 let atualizacaoCorreiosEmAndamento = null;
 
-async function atualizarRastreiosAgora() {
+async function atualizarRastreiosAgora(manual = false) {
     // Evita duas atualizações simultâneas se o usuário clicar várias vezes.
     if (atualizacaoCorreiosEmAndamento) {
         return atualizacaoCorreiosEmAndamento;
@@ -550,7 +603,7 @@ async function atualizarRastreiosAgora() {
 
     atualizacaoCorreiosEmAndamento = (async () => {
         try {
-            await carregarStatusCorreios();
+            await carregarStatusCorreios({ mostrarProgresso: manual === true });
             filtrar();
             atualizarNotificacoes();
         } catch (erro) {
@@ -4446,6 +4499,7 @@ async function rastrearCorreios(codigo) {
 
 setInterval(async () => {
     if (document.hidden) return;
+    if (atualizacaoCorreiosEmAndamento) return;
 
     try {
         await carregarStatusCorreios();

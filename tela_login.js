@@ -135,6 +135,11 @@ function salvarSessaoLogin(
         );
 
         localStorage.setItem(
+            "codigoVendedor",
+            String(codigo || "").trim().toUpperCase()
+        );
+
+        localStorage.setItem(
             "manterConectado",
             "true"
         );
@@ -165,6 +170,11 @@ function salvarSessaoLogin(
         sessionStorage.setItem(
             "acessoAdministrativo",
             String(acessoAdministrativo)
+        );
+
+        sessionStorage.setItem(
+            "codigoVendedor",
+            String(codigo || "").trim().toUpperCase()
         );
 
     }

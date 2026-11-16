@@ -809,6 +809,17 @@ window.exibirCliente = true;
 window.exibirRepresentante = true;
 window.isAdmin = acessoTotal;
 
+// Linha "Vendedor:" nos cards: acesso total (v.santos) e
+// usuários com código de vendedor ADMIN1.
+const codigoVendedorSessao = String(
+    sessionStorage.getItem("codigoVendedor") ||
+    localStorage.getItem("codigoVendedor") ||
+    ""
+).trim().toUpperCase();
+
+window.exibirVendedor =
+    acessoTotal || codigoVendedorSessao === "ADMIN1";
+
 
 /* =========================================================
    INICIALIZA BUSCA
@@ -3448,7 +3459,7 @@ function renderizar(lista) {
 
 
                 ${
-                    window.isAdmin
+                    window.exibirVendedor
                         ? `
                             <div class="card-vendedor">
 

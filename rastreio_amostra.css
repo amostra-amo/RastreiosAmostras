@@ -6409,18 +6409,45 @@ body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) {
     box-shadow: -18px 0 50px rgba(2, 8, 23, .35);
 }
 
+/* "local": a faixa colorida rola junto com o conteúdo */
 #overlayDetalhes #conteudoDetalhes {
     background:
-        var(--cor-barra, linear-gradient(100deg, #071a33, #12345d)) top / 100% 118px no-repeat,
+        var(--cor-barra, linear-gradient(100deg, #071a33, #12345d)) top / 100% 70px no-repeat local,
         #f3f6fa;
 }
 
+#overlayDetalhes .detalhes-centro {
+    padding-top: 18px !important;
+}
+
+/* Título compacto, na mesma linha do PAC/SEDEX e do botão fechar */
 #overlayDetalhes .detalhes-centro h3 {
     color: #ffffff !important;
-    font-size: 22px;
+    font-size: 21px;
     letter-spacing: .2px;
+    line-height: 34px !important;
+    padding: 0 170px 0 0 !important;
     border-bottom: 0 !important;
-    margin-bottom: 26px !important;
+    margin: 0 0 22px !important;
+}
+
+#overlayDetalhes .icone-envio-detalhes {
+    top: 23px !important;
+    right: 66px !important;
+    width: auto !important;
+    height: 24px !important;
+    max-width: 110px;
+    object-fit: contain;
+    opacity: 1 !important;
+}
+
+#overlayDetalhes .painel-detalhes .fechar {
+    top: 18px !important;
+}
+
+/* Parágrafos vazios (sobras do HTML) não viram caixas brancas */
+#overlayDetalhes .detalhes-centro > p:empty {
+    display: none !important;
 }
 
 #overlayDetalhes .icone-envio-detalhes img,
@@ -6431,16 +6458,18 @@ body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) {
     box-shadow: 0 4px 12px rgba(2, 8, 23, .18);
 }
 
+/* Fechar: fundo sólido, visível sobre a faixa e sobre o fundo claro */
 #overlayDetalhes .painel-detalhes .fechar {
     color: #ffffff !important;
-    background: rgba(255, 255, 255, .14) !important;
-    border: 1px solid rgba(255, 255, 255, .28) !important;
+    background: var(--cor-sidebar, #173b68) !important;
+    border: 1px solid rgba(255, 255, 255, .35) !important;
+    box-shadow: 0 4px 12px rgba(2, 8, 23, .25);
     border-radius: 10px !important;
     z-index: 6;
 }
 
 #overlayDetalhes .painel-detalhes .fechar:hover {
-    background: rgba(255, 255, 255, .26) !important;
+    filter: brightness(1.2);
 }
 
 /* Caixas (Nota, Pedido, Postagem, Prazo) */
@@ -6457,6 +6486,8 @@ body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) {
 
 /* Linha do rastreio */
 #overlayDetalhes .linha-rastreio-central {
+    margin: 12px 0 !important;
+    padding: 8px 10px 8px 14px !important;
     background: #ffffff !important;
     border: 1px solid #e3e9f1 !important;
     border-radius: 12px !important;
@@ -6471,6 +6502,8 @@ body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) {
 }
 
 #overlayDetalhes .linha-rastreio-central button {
+    min-height: 30px !important;
+    padding: 5px 12px !important;
     color: #ffffff !important;
     background: var(--cor-sidebar, #173b68) !important;
     border: 0 !important;

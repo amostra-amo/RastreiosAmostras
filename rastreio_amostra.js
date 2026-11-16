@@ -3960,17 +3960,13 @@ function abrirDetalhes(grupo) {
             <hr>
 
 
-            <p>
+            <div class="amenv">
 
-                <div class="amenv">
+                <strong>
+                    Amostras Enviadas
+                </strong>
 
-                    <strong>
-                        Amostras Enviadas
-                    </strong>
-
-                </div>
-
-            </p>
+            </div>
 
 
             <ul class="lista-itens ${

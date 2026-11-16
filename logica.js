@@ -1087,7 +1087,7 @@ document.querySelectorAll(".card-status").forEach(card => {
 
   // usuários que podem ver o analytics
   function controlarAnalytics(usuario) {
-  const usuariosAnalytics = ["v.santos", "kcipriano"];
+  const usuariosAnalytics = ["v.santos"];
   const btn = document.getElementById("btnAnalytics");
 
   if (!btn) return;

@@ -3,7 +3,7 @@
    ========================================================= */
 
 :root {
-    --cor-fundo: #aed0fcdc;
+    --cor-fundo: #080808;
     --azul-card: #5c88bd;
     --azul-principal: #1976d2;
     --azul-escuro: #0d47a1;
@@ -32,10 +32,28 @@ body {
 }
 
 body:not(.tema-quatrok):not(.tema-luara):not(.tema-direto) {
+
     background:
-        radial-gradient(circle at 15% 20%, rgba(255,255,255,.38), transparent 30%),
-        radial-gradient(circle at 85% 80%, rgba(25,118,210,.18), transparent 34%),
-        #aed0fcdc;
+
+        radial-gradient(
+            circle at 20% 15%,
+            rgba(25,118,210,.18),
+            transparent 32%
+        ),
+
+        radial-gradient(
+            circle at 80% 85%,
+            rgba(158,61,100,.14),
+            transparent 30%
+        ),
+
+        linear-gradient(
+            135deg,
+            #181818 0%,
+            #0b0b0b 50%,
+            #020202 100%
+        );
+
 }
 
 body::before,
@@ -78,22 +96,77 @@ body::after {
    ========================================================= */
 
 #loginVendedor {
+
     position: relative;
+
     z-index: 1;
-    width: 410px;
-    max-width: 92vw;
-    min-width: 320px;
-    padding: 42px 38px 34px;
-    background: linear-gradient(145deg, rgba(92,136,189,.97), rgba(61,104,157,.96));
-    border: 1px solid rgba(255,255,255,.28);
+
+    width: min(470px, 92vw);
+
+    min-height: 560px;
+
+    padding: 38px 42px 32px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #000a11 0%,
+            #03111b 45%,
+            #000a11 100%
+        );
+
+    border: 1px solid rgba(255,255,255,.18);
+
     border-radius: 24px;
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
-    gap: 17px;
+
+    justify-content: flex-start;
+
+    gap: 0;
+
     overflow: visible;
-    box-shadow: 0 22px 55px rgba(0,35,75,.28), inset 0 1px 0 rgba(255,255,255,.2);
-    backdrop-filter: blur(8px);
+
+    box-shadow:
+        0 25px 65px rgba(0,0,0,.55),
+        inset 0 1px 0 rgba(255,255,255,.10);
+
+    backdrop-filter: blur(10px);
+
+}
+
+#loginVendedor .topo {
+
+    width: 100%;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    margin-bottom: 38px;
+
+}
+
+#loginVendedor > h3 {
+    margin-bottom: 4px !important;
+}
+
+#painelLogoQuatroK {
+
+    display: none !important;
+
+}
+
+.separador-login {
+
+    display: none !important;
+
 }
 
 #loginVendedor h1,
@@ -119,12 +192,20 @@ body::after {
    LOGO E FORMULÁRIO
    ========================================================= */
 
+
 #logoMarca {
-    height: 58px;
+
     width: auto;
+
+    height: 70px;
+
+    max-width: 100%;
+
     object-fit: contain;
-    margin-bottom: 2px;
-    filter: drop-shadow(0 4px 5px rgba(0,0,0,.16));
+
+    filter:
+        drop-shadow(0 5px 12px rgba(0,0,0,.5));
+
 }
 
 form {
@@ -137,20 +218,32 @@ form {
 .input-group {
     position: relative;
     width: 100%;
-    margin: 9px 0;
+    margin: 8px 0;
 }
 
 .input-group input {
+
     width: 100%;
-    height: 50px;
-    padding: 16px 44px 7px 16px;
+
+    height: 52px;
+
+    padding: 16px 48px 7px 16px;
+
     font-size: 15px;
-    border: 1px solid rgba(255,255,255,.45);
+
+    border: 1px solid rgba(255,255,255,.35);
+
     border-radius: 10px;
-    background: rgba(255,255,255,.13);
-    color: var(--texto);
+
+    background:
+        rgba(255,255,255,.07);
+
+    color: #ffffff;
+
     outline: none;
+
     transition: .25s ease;
+
 }
 
 .input-group input::placeholder { color: transparent; }
@@ -185,68 +278,186 @@ form {
 }
 
 .input-group label {
+
     position: absolute;
+
     left: 16px;
-    top: 16px;
-    color: var(--texto-suave);
+
+    top: 17px;
+
+    color: rgba(255,255,255,.70);
+
     font-size: 14px;
+
     pointer-events: none;
+
     transition: .25s ease;
+
 }
 
 .input-group input:focus,
 .input-group input:valid {
-    border-color: rgba(255,255,255,.9);
-    background: rgba(255,255,255,.2);
-    box-shadow: 0 0 0 3px rgba(25,118,210,.22);
+
+    border-color: rgba(255,255,255,.75);
+
+    background:
+        rgba(255,255,255,.11);
+
+    box-shadow:
+        0 0 0 3px rgba(255,255,255,.06);
+
 }
+
 
 .input-group input:focus + label,
 .input-group input:valid + label {
+
     top: -8px;
+
     left: 12px;
+
     padding: 0 6px;
+
     font-size: 11px;
-    color: var(--texto);
-    background: var(--azul-card);
+
+    color: #ffffff;
+
+    background: #101010;
+
     border-radius: 4px;
+
+}
+
+/* =========================================================
+   BOTÃO MOSTRAR / OCULTAR SENHA
+   ========================================================= */
+
+.input-group {
+    position: relative;
+}
+.senha-group {
+
+    position: relative;
+
 }
 
 .toggle-senha {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
+
+    position: absolute !important;
+
+    top: 50% !important;
+
+    right: 9px !important;
+
+    transform: translateY(-50%) !important;
+
+    width: 38px !important;
+
+    height: 38px !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    background: transparent !important;
+
+    border: none !important;
+
+    border-radius: 8px !important;
+
+    color: rgba(255,255,255,.70);
+
     cursor: pointer;
-    color: var(--texto-suave);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+    z-index: 10;
+
+    box-shadow: none !important;
+
 }
 
-.toggle-senha:hover { color: var(--texto); }
+
+.toggle-senha:hover {
+
+    color: #ffffff;
+
+    background:
+        rgba(255,255,255,.08) !important;
+
+    transform:
+        translateY(-50%) !important;
+
+}
+
+
+
+.toggle-senha svg {
+
+    display: block;
+
+    width: 21px;
+
+    height: 21px;
+
+    pointer-events: none;
+
+}
+
+.toggle-senha svg path,
+.toggle-senha svg circle {
+
+    stroke: currentColor;
+
+}
 
 #btnEntrarLogin {
+
     width: 100%;
-    min-height: 46px;
-    margin: 19px 0 0;
+
+    height: 48px;
+
+    margin-top: 18px;
+
     padding: 11px 22px;
-    color: var(--texto);
+
+    color: #ffffff;
+
     font-size: 15px;
+
     font-weight: bold;
-    background: linear-gradient(135deg, var(--azul-principal), var(--azul-escuro));
-    border: 1px solid rgba(255,255,255,.45);
+
+    background:
+        linear-gradient(
+            135deg,
+            #0b3864,
+            #05224d
+        );
+
+    border: 1px solid rgba(255,255,255,.30);
+
     border-radius: 10px;
+
     cursor: pointer;
+
     transition: .2s ease;
+
 }
 
+
 #btnEntrarLogin:hover {
+
     transform: translateY(-2px);
-    box-shadow: 0 7px 16px rgba(0,32,96,.3);
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.40);
+
     filter: brightness(1.08);
+
 }
 
 #btnLoginVendedor {
@@ -265,12 +476,19 @@ form {
 #btnlogininicio { margin-top: 40%; }
 
 #erroLogin {
+
     width: 100%;
+
     min-height: 18px;
-    margin-top: 6px;
+
+    margin-top: 7px;
+
     color: #ffeb3b;
+
     font-size: 13px;
+
     text-align: center;
+
 }
 
 /* =========================================================
@@ -278,11 +496,14 @@ form {
    ========================================================= */
 
 .separador-login {
-    width: 100%;
+    width: 30px;
+    height: 100%;
+    min-height: 235px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin: -10px 0  0px;
+    margin: 0;
     color: rgba(255,255,255,.76);
     font-size: 11px;
     font-weight: bold;
@@ -292,12 +513,13 @@ form {
 .separador-login::before,
 .separador-login::after {
     content: "";
-    height: 1px;
+    width: 1px;
+    height: auto;
     flex: 1;
     background: var(--linha);
 }
 
-.separador-login span { margin: 0 12px; }
+.separador-login span { margin: 10px 0; }
 
 #acessoCodigoVendedor {
     width: 100%;
@@ -409,22 +631,773 @@ form {
 
 #loginVendedor:hover::before { filter: drop-shadow(0 0 6px #00bfff) drop-shadow(0 0 15px #00bfff); }
 #loginVendedor:hover::after { filter: drop-shadow(0 0 6px #e40046) drop-shadow(0 0 15px #e40046); }
+/* =========================================================
+   CRIAR NOVA CONTA
+   ========================================================= */
 
-@media (max-width: 500px) {
-    #loginVendedor {
-        width: 92vw;
-        min-width: 0;
-        padding: 32px 22px 27px;
-        border-radius: 20px;
+.btn-criar-conta {
+
+    width: 100%;
+
+    height: 44px;
+
+    margin-top: 10px;
+
+    padding: 9px 16px;
+
+    background:
+        rgba(255,255,255,.04);
+
+    color: #ffffff;
+
+    border: 1px solid rgba(255,255,255,.28);
+
+    border-radius: 9px;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    transition: .2s ease;
+
+}
+
+.btn-criar-conta:hover {
+
+    background:
+        rgba(255,255,255,.10);
+
+    border-color:
+        rgba(255,255,255,.60);
+
+    transform: translateY(-1px);
+
+}
+/* =========================================================
+   TELA INTERNA DE CADASTRO
+   ========================================================= */
+
+#areaCadastro {
+
+    display: none;
+
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 20;
+
+    width: auto;
+    padding: 30px 50px;
+
+    border-radius: 24px;
+
+     background:
+        linear-gradient(
+            145deg,
+            #000a11 0%,
+            #03111b 45%,
+            #000a11 100%
+        );
+
+    opacity: 0;
+
+    transform: translateX(30px);
+
+    pointer-events: none;
+
+    transition:
+        opacity .35s ease,
+        transform .35s ease;
+
+}
+#areaCadastro .cadastro-conteudo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* =========================================================
+   CADASTRO ABERTO
+   ========================================================= */
+
+#areaCadastro.cadastro-aberto {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    opacity: 1;
+
+    transform: translateX(0);
+
+    pointer-events: auto;
+
+}
+
+
+/* =========================================================
+   CONTEÚDO
+   ========================================================= */
+
+.cadastro-conteudo {
+
+    width: 100%;
+
+    max-width: 390px;
+
+    margin: 0 auto;
+
+    animation:
+        cadastroEntrada .4s ease both;
+
+}
+
+
+@keyframes cadastroEntrada {
+
+    from {
+
+        opacity: 0;
+
+        transform: translateY(12px);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: translateY(0);
+
+    }
+
+}
+
+
+/* =========================================================
+   CABEÇALHO
+   ========================================================= */
+
+.cadastro-topo {
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    margin-bottom: 24px;
+
+    text-align: center;
+
+}
+
+
+.cadastro-topo h4 {
+
+    margin: 0;
+
+    color: var(--texto);
+
+    font-size: 21px;
+
+    font-weight: bold;
+
+    text-align: center;
+
+}
+
+
+.cadastro-topo p {
+
+    margin: 0;
+
+    color: var(--texto-suave);
+
+    font-size: 12px;
+
+    line-height: 17px;
+
+    text-align: center;
+
+}
+
+
+/* =========================================================
+   ÍCONE +
+   ========================================================= */
+
+.cadastro-icone {
+
+    width: 42px;
+
+    height: 42px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(255,255,255,.35);
+
+    background: rgba(255,255,255,.12);
+
+    color: white;
+
+    font-size: 27px;
+
+    font-weight: 300;
+
+    box-shadow:
+        0 5px 15px rgba(0,0,0,.12);
+
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+#areaCadastro .input-group {
+
+    width: 100%;
+
+    margin: 9px 0;
+
+}
+
+
+#areaCadastro .input-group input {
+
+    width: 100%;
+
+    height: 50px;
+
+}
+
+
+/* =========================================================
+   BOTÕES
+   ========================================================= */
+
+#areaCadastro button {
+
+    width: 100%;
+
+    min-height: 45px;
+
+    margin-top: 10px;
+
+    padding: 9px 16px;
+
+    border-radius: 9px;
+
+    border: 1px solid rgba(255,255,255,.35);
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--azul-principal),
+            var(--azul-escuro)
+        );
+
+    color: var(--texto);
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition:
+        transform .2s ease,
+        filter .2s ease,
+        box-shadow .2s ease;
+
+}
+
+
+#areaCadastro button:hover {
+
+    transform: translateY(-1px);
+
+    filter: brightness(1.08);
+
+    box-shadow:
+        0 7px 16px rgba(0,0,0,.15);
+
+}
+
+
+#areaCadastro button:disabled {
+
+    opacity: .6;
+
+    cursor: wait;
+
+    transform: none;
+
+}
+
+
+/* =========================================================
+   MENSAGEM
+   ========================================================= */
+
+#erroCadastro {
+
+    width: 100%;
+
+    min-height: 20px;
+
+    margin-top: 8px;
+
+    color: #ffeb3b;
+
+    font-size: 12px;
+
+    text-align: center;
+
+    line-height: 18px;
+
+}
+
+
+/* =========================================================
+   USUÁRIO VALIDADO
+   ========================================================= */
+
+.cadastro-sucesso {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    width: 100%;
+
+    margin-bottom: 18px;
+
+    padding: 12px 14px;
+
+    border-radius: 10px;
+
+    background:
+        rgba(128,255,128,.10);
+
+    border:
+        1px solid rgba(128,255,128,.25);
+
+}
+
+
+.cadastro-sucesso > span {
+
+    width: 28px;
+
+    height: 28px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        rgba(128,255,128,.18);
+
+    color: #80ff80;
+
+    font-weight: bold;
+
+}
+
+
+.cadastro-sucesso strong {
+
+    display: block;
+
+    color: #80ff80;
+
+    font-size: 13px;
+
+}
+
+
+.cadastro-sucesso small {
+
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--texto-suave);
+
+    font-size: 11px;
+
+}
+
+
+/* =========================================================
+   VOLTAR
+   ========================================================= */
+
+#btnVoltarLogin {
+
+    background:
+        rgba(255,255,255,.07) !important;
+
+    border-color:
+        rgba(255,255,255,.25) !important;
+
+    box-shadow: none !important;
+
+}
+
+
+#btnVoltarLogin:hover {
+
+    background:
+        rgba(255,255,255,.13) !important;
+
+}
+
+
+/* =========================================================
+   PAINEL GRUPO 4K
+   ========================================================= */
+
+#painelLogoQuatroK {
+
+    grid-column: 3;
+
+    grid-row: 3;
+
+    min-height: 235px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    position: relative;
+
+    padding: 25px;
+
+    text-align: center;
+
+    border-radius: 16px;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(255,255,255,.13),
+            rgba(255,255,255,.03) 65%
+        );
+
+    border:
+        1px solid rgba(255,255,255,.12);
+
+    overflow: hidden;
+
+}
+
+
+.logo-glow {
+
+    position: absolute;
+
+    width: 180px;
+
+    height: 180px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255,255,255,.08);
+
+    filter: blur(25px);
+
+    pointer-events: none;
+
+}
+
+
+.logo-grupo4k {
+
+    position: relative;
+
+    z-index: 2;
+
+    width: min(230px, 85%);
+
+    height: auto;
+
+    max-height: 100px;
+
+    object-fit: contain;
+
+    filter:
+        drop-shadow(
+            0 8px 15px rgba(0,0,0,.22)
+        );
+
+    transition:
+        transform .35s ease;
+
+}
+
+
+#painelLogoQuatroK:hover
+.logo-grupo4k {
+
+    transform: scale(1.04);
+
+}
+
+
+.linha-logo {
+
+    width: 75px;
+
+    height: 1px;
+
+    margin: 17px 0 12px;
+
+    background:
+        rgba(255,255,255,.35);
+
+}
+
+
+.texto-logo-principal {
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    letter-spacing: .3px;
+
+}
+
+
+.texto-logo-secundario {
+
+    margin-top: 4px;
+
+    color: rgba(255,255,255,.65);
+
+    font-size: 11px;
+
+    letter-spacing: 2px;
+
+    text-transform: uppercase;
+
+}
+
+
+/* =========================================================
+   ACESSO ANTIGO — MANTIDO APENAS PARA NÃO QUEBRAR O JS
+   ========================================================= */
+
+#acessoCodigoVendedor {
+
+    display: none !important;
+
+}
+@media (max-width: 760px) {
+    #loginVendedor .topo,
+    #loginVendedor > h3,
+    #loginVendedor > form,
+    #loginVendedor > .separador-login,
+    #loginVendedor > #acessoCodigoVendedor {
+        grid-column: 1;
+        grid-row: auto;
+    }}
+
+    #loginVendedor > .separador-login {
+        width: 100%;
+        height: 22px;
+        min-height: 22px;
+        flex-direction: row;
+    }
+
+    .separador-login::before,
+    .separador-login::after {
+        width: auto;
+        height: 1px;
+    }
+
+    .separador-login span { margin: 0 12px; }
+
+    #acessoCodigoVendedor {
+        padding: 16px;
     }
 
     #loginVendedor::before,
-    #loginVendedor::after { border-radius: 22px; }
-
-    #acessoCodigoVendedor { padding: 16px; }
-}
+    #loginVendedor::after {
+        border-radius: 22px;
+    }
 
 @media (prefers-reduced-motion: reduce) {
     #loginVendedor::before,
     #loginVendedor::after { animation: none; }
+}
+
+/* =========================================================
+   MANTENHA-ME CONECTADO
+   ========================================================= */
+
+.manter-conectado {
+
+    width: auto;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    margin-top: 10px;
+
+    margin-bottom: 4px;
+
+    color: rgba(255,255,255,.78);
+
+    font-size: 13px;
+
+    cursor: pointer;
+
+    user-select: none;
+
+}
+
+
+/* CHECKBOX */
+
+.manter-conectado input {
+
+    appearance: none;
+
+    -webkit-appearance: none;
+
+    width: 17px;
+
+    height: 17px;
+
+    flex-shrink: 0;
+
+    margin: 0;
+
+    border: 1px solid rgba(255,255,255,.40);
+
+    border-radius: 5px;
+
+    background: rgba(255,255,255,.06);
+
+    cursor: pointer;
+
+    position: relative;
+
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease,
+        transform .15s ease;
+
+}
+
+
+/* HOVER */
+
+.manter-conectado input:hover {
+
+    border-color: rgba(255,255,255,.70);
+
+    background: rgba(255,255,255,.11);
+
+}
+
+
+/* MARCADO */
+
+.manter-conectado input:checked {
+
+    background:
+        linear-gradient(
+            135deg,
+            #1976d2,
+            #0d47a1
+        );
+
+    border-color: #3a86e9;
+
+    box-shadow:
+        0 0 0 3px rgba(25,118,210,.15);
+
+}
+
+
+/* CHECK */
+
+.manter-conectado input:checked::after {
+
+    content: "";
+
+    position: absolute;
+
+    left: 5px;
+
+    top: 2px;
+
+    width: 4px;
+
+    height: 8px;
+
+    border: solid #ffffff;
+
+    border-width: 0 2px 2px 0;
+
+    transform: rotate(45deg);
+
+}
+
+
+/* TEXTO */
+
+.manter-conectado span {
+
+    cursor: pointer;
+
+    transition: color .2s ease;
+
+}
+
+.manter-conectado:hover span {
+
+    color: #ffffff;
+
 }

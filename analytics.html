@@ -2,12 +2,10 @@
 <html lang="pt-BR">
 
 <head>
-    <link rel="icon" type="image/svg+xml"
-href="data:image/svg+xml;charset=UTF-8,
-<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-  <rect width='0' height='0' rx='20' fill='%23'/>
-  <text x='50%' y='100%' text-anchor='middle' font-size='100'>📈</text>
-</svg>">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Analytics Amostra</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='5 5 75 85'><g stroke='%230d2d7a' stroke-width='4' stroke-linejoin='round'><polygon points='8,27 40,44 40,90 8,73' fill='%23c9d4e6'/><polygon points='40,44 72,27 72,73 40,90' fill='%2398abc7'/><polygon points='40,10 72,27 40,44 8,27' fill='%23f2f6fc'/></g><g transform='translate(68 40) rotate(-45)'><polygon points='-30,-9 6,-9 6,-22 34,0 6,22 6,9 -30,9' fill='%23ff9a1a' stroke='%230d2d7a' stroke-width='3.5' stroke-linejoin='round'/></g></svg>" />
 
     <meta charset="UTF-8" />
     <title>Analytics Amostra</title>
@@ -44,7 +42,7 @@ href="data:image/svg+xml;charset=UTF-8,
         <!-- 🔸 MEIO -->
         <div class="menu-centro">
             
-            <button class="menu-btn" onclick="window.location.href='analytics.html'">📈 Rastreio Amostras</button>
+            <button class="menu-btn" onclick="window.location.href='rastreio_amostra.html'">📈 Rastreio Amostras</button>
             <button class="menu-btn" onclick="window.location.href='rankprod.html'">📈 RankProd</button>
             <button class="menu-btn" onclick="window.location.href='retorno_amostras.html'">💸 Retorno de Amostras</button>
             <button class="menu-btn" onclick="window.location.href='consolidados.html'">📋 Relatório Consolidados</button>
@@ -97,24 +95,12 @@ href="data:image/svg+xml;charset=UTF-8,
         
         <button class="btn-menu" onclick="toggleSidebar()">☰</button>
 
-        <div class="logo-area">
-            <img src="/Imagens/4k BRANCO.png" alt="Logo 4K">
-            <h1 class="titulo-sistema">Análise | Envio de Amostras</h1>
-        </div>
+        <div class="logo-area"><img src="/Imagens/4k BRANCO.png" alt="Logo 4K"></div>
+        <h1 class="titulo-sistema">Análise | Envio de Amostras</h1>
+        <div class="status-correios-topo" id="statusCorreiosTopo" role="status" aria-live="polite"><span class="status-topo-ponto"></span><span id="avisoDevolucao">Aguardando consulta aos Correios...</span></div>
 
         
 
-        <div class="filtros-data">
-            <label>
-                Filtrar p/ Data:
-                <input type="date" id="dataInicio" onchange="filtrarPorData()">
-            </label>
-
-            <label>
-                Até
-                <input type="date" id="dataFim" onchange="filtrarPorData()">
-            </label>
-        </div>
     </header>
 
     <!-- CONTAINER PRINCIPAL -->
@@ -122,34 +108,23 @@ href="data:image/svg+xml;charset=UTF-8,
         <div class="layout-principal">
             <main class="conteudo-central">
 
-                <!-- CARDS KPI -->
-                <section class="resumo-cards2">
-                    <div class="card2">
-                        <span>Envios</span>
-                        <h2 id="totalRastreios">0</h2>
-                    </div>
-
-                    <div class="card2 card-envios">
-                        <div class="card-topo">
-                            <span>R$ Envios</span>
-                            <span class="link-detalhes" onclick="toggleResumoCentroCusto()">
-                                Exibir detalhes
-                            </span>
-                        </div>
-                        <h2 id="totalValor">R$ 0,00</h2>
-                    </div>
+                <nav class="abas-analytics" aria-label="Visualizações do Analytics"><button id="abaEnvios" class="aba-analytics selecionada" type="button" onclick="alternarAnalytics('envios')"><span aria-hidden="true">⬡</span> Envios</button><button id="abaDevolucoes" class="aba-analytics" type="button" onclick="alternarAnalytics('devolucoes')"><span aria-hidden="true">⬡</span> Devoluções</button></nav><div id="painelEnviosAnalytics">
+                <section class="dash-intro env-intro"><div><span class="dash-eyebrow">INTELIGÊNCIA LOGÍSTICA / ENVIOS</span><h1>Painel de envios</h1><p>Visão executiva dos envios, custos e evolução mensal.</p></div><span class="dash-status">● Dados dos envios</span></section>
+                <section class="dash-kpis env-kpis">
+                  <article class="dash-kpi"><div class="dash-kpi-icon">▣</div><span>ENVIOS REGISTRADOS</span><strong id="totalRastreios">0</strong><small>Códigos de rastreio distintos</small></article>
+                  <article class="dash-kpi"><div class="dash-kpi-icon">R$</div><span>VALOR TOTAL DOS ENVIOS</span><strong id="totalValor">R$ 0,00</strong><small>Custos associados aos envios</small><button type="button" class="dash-link-custo dash-link-top" onclick="abrirResumoCentroCusto('envios')">Exibir detalhes ↗</button></article>
+                  <article class="dash-kpi"><div class="dash-kpi-icon">♙</div><span>CLIENTES ATENDIDOS</span><strong id="totalClientesEnvios">0</strong><small>Clientes distintos no período</small></article>
                 </section>
-
-                <!-- CARD DA TABELA -->
-                <section class="card-container-tabela">
+<section class="dash-charts dash-charts-new env-charts">
+ <article class="dash-panel dash-main-chart"><div class="dash-panel-head"><div><span class="dash-eyebrow">EVOLUÇÃO MENSAL</span><h2 id="tituloGraficoEnvios">Envios por mês</h2><p class="dash-chart-hint">Clique em um mês no gráfico de barras para filtrar o histórico.</p></div><div class="dash-segment" aria-label="Tipo de gráfico"><button type="button" id="botaoQtdEnvios" class="ativo" onclick="alterarGraficoAnalytics('envios','envios')">Envios</button><button type="button" id="botaoCustoEnvios" onclick="alterarGraficoAnalytics('envios','custos')">Custos R$</button></div></div><div id="graficoPrincipalEnvios" class="dash-chart-bars"></div><button type="button" id="limparMesEnvios" class="dash-clear-filter" onclick="limparMesEnvios()" hidden>Limpar filtro do mês ×</button></article>
+ <article class="dash-panel dash-cost-center"><div class="dash-panel-head"><div><span class="dash-eyebrow">DISTRIBUIÇÃO</span><h2>Centro de custo</h2><p class="dash-chart-hint">Distribuição vinculada ao indicador selecionado no gráfico.</p></div></div><div id="centroCustoPainelEnvios" class="dash-centro-lista"></div></article>
+ </section>
+                 <!-- CARD DA TABELA -->
+                <section class="card-container-tabela dash-panel env-table-panel">
+                    <div class="dash-panel-head dash-table-head env-historico-head"><div><span class="dash-eyebrow">REGISTROS</span><h2>Histórico de envios</h2><p>Consulte os envios e abra os detalhes na lupa.</p></div><div class="dash-search env-search"><span aria-hidden="true">⌕</span><input type="search" id="inputRastreio" placeholder="Buscar cliente, vendedora, pedido, NF ou rastreio" oninput="filtrarPorRastreio()" aria-label="Pesquisar envios"></div></div>
+                    <div class="env-date-filter"><label>Data inicial <input type="date" id="dataInicio" onchange="filtrarPorData()"></label><label>Data final <input type="date" id="dataFim" onchange="filtrarPorData()"></label><button type="button" onclick="limparDatasEnvios()">Limpar datas</button></div>
                     <div class="topo-tabela">
 
-                        <div class="filtro-rastreio">
-                        <label>
-                            Buscar:
-                            <input type="text" id="inputRastreio" placeholder="Cod. Rastreio" oninput="filtrarPorRastreio()">
-                        </label>
-                            </div>
 
                         <div class="filtro-valor">
                             <span class="label-toggle">Acima de R$ 100,00</span>
@@ -200,15 +175,31 @@ href="data:image/svg+xml;charset=UTF-8,
                     </div>
                 </section>
 
+</div>
+<div id="painelDevolucoesAnalytics" hidden>
+  <section class="dash-intro"><div><span class="dash-eyebrow">INTELIGÊNCIA LOGÍSTICA / DEVOLUÇÕES</span><h1>Painel de devoluções</h1><p>Acompanhe os retornos confirmados pelos Correios e seus impactos nos envios.</p></div><span class="dash-status"><span class="dash-dot"></span> Dados dos Correios</span></section>
+  <section class="dash-kpis">
+    <article class="dash-kpi"><div class="dash-kpi-icon">↩</div><span>DEVOLUÇÕES IDENTIFICADAS</span><strong id="totalDevolucoes">0</strong><small>Rastreios com retorno confirmado</small></article>
+    <article class="dash-kpi"><div class="dash-kpi-icon">R$</div><span>VALOR DOS ENVIOS DEVOLVIDOS</span><strong id="valorDevolucoes">R$ 0,00</strong><small>Valor vinculado aos envios</small><button type="button" class="dash-link-custo dash-link-top" onclick="abrirResumoCentroCusto('devolucoes')">Exibir detalhes ↗</button></article>
+    <article class="dash-kpi"><div class="dash-kpi-icon">▣</div><span>CLIENTES IMPACTADOS</span><strong id="clientesDevolucoes">0</strong><small>Clientes distintos com devolução</small></article>
+    
+  </section>
+  <section class="dash-charts dash-charts-new ">
+ <article class="dash-panel dash-main-chart"><div class="dash-panel-head"><div><span class="dash-eyebrow">EVOLUÇÃO MENSAL</span><h2 id="tituloGraficoDevolucoes">Devoluções por mês</h2><p class="dash-chart-hint">Clique em um mês no gráfico de barras para filtrar o histórico.</p></div><div class="dash-segment" aria-label="Tipo de gráfico"><button type="button" id="botaoQtdDevolucoes" class="ativo" onclick="alterarGraficoAnalytics('devolucoes','envios')">Devoluções</button><button type="button" id="botaoCustoDevolucoes" onclick="alterarGraficoAnalytics('devolucoes','custos')">Custos R$</button></div></div><div id="graficoPrincipalDevolucoes" class="dash-chart-bars"></div><button type="button" id="limparMesDevolucoes" class="dash-clear-filter" onclick="limparFiltroMesDevolucao()" hidden>Limpar filtro do mês ×</button></article>
+ <article class="dash-panel dash-cost-center"><div class="dash-panel-head"><div><span class="dash-eyebrow">DISTRIBUIÇÃO</span><h2>Centro de custo</h2><p class="dash-chart-hint">Distribuição vinculada ao indicador selecionado no gráfico.</p></div></div><div id="centroCustoPainelDevolucoes" class="dash-centro-lista"></div></article>
+ </section>
+   <section class="dash-panel dash-table-panel"><div class="dash-panel-head dash-table-head"><div><span class="dash-eyebrow">RASTREABILIDADE</span><h2>Histórico de devoluções</h2><p>Consulte os envios e abra os detalhes na lupa.</p></div><div class="dash-search"><span>⌕</span><input id="buscaDevolucoes" placeholder="Buscar cliente, vendedora, marca, pedido, NF ou rastreio" oninput="renderizarDevolucoes()" aria-label="Pesquisar devoluções"></div></div><div class="tabela-scroll"><table class="tabela-analises tabela-devolucoes"><thead><tr><th>Mês</th><th>Marca</th><th>Pedido</th><th>Nota fiscal</th><th>Cliente</th><th>Vendedora</th><th>Custo</th><th>Detalhes</th></tr></thead><tbody id="listaDevolucoes"></tbody></table></div></section>
+</div>
             </main>
         </div>
     </div>
 
+    <div id="modalDevolucao" class="modal modal-devolucao" role="dialog" aria-modal="true" aria-labelledby="tituloDetalhesDevolucao"><div class="modal-content"><button class="close" type="button" onclick="fecharDetalhesDevolucao()" aria-label="Fechar">✕</button><h2 id="tituloDetalhesDevolucao">Detalhes da devolução</h2><div id="camposDevolucao" class="detalhes-grid"></div><hr><h3>Itens enviados</h3><ul id="itensDevolucao"></ul></div></div>
     <!-- 🔥 OVERLAY CENTRO DE CUSTO (FORA DO LAYOUT) -->
     <div id="submenuCentroCusto" class="overlay-centro">
         <div class="conteudo-overlay">
             <span class="close-overlay" onclick="fecharCentroCusto()">✕</span>
-            <h3>Resumo por Departamento</h3>
+            <h3 id="tituloResumoCentroCusto">Resumo por centro de custo</h3><p id="descricaoResumoCentroCusto" class="centro-subtitulo">Valores agrupados por centro de custo</p>
 
             <div class="scroll-centro">
                 <table class="tabela-analises">
@@ -250,7 +241,7 @@ href="data:image/svg+xml;charset=UTF-8,
 
         const usuario = localStorage.getItem("usuarioLogado");
 
-        if (!temPermissaoTela(usuario, TELA_ATUAL)) {
+        if (typeof temPermissaoTela === "function" && !temPermissaoTela(usuario, TELA_ATUAL)) {
             window.location.href = "tela_inicio.html";
         }
     </script>

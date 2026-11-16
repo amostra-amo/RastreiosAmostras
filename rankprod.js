@@ -65,8 +65,8 @@ const paginaAtual = window.location.pathname;
 
 botoes.forEach(btn => {
     if (
-        (paginaAtual.includes("analytics.html") && btn.textContent.includes(" Análises de Amostras")) ||
-        (paginaAtual.includes("rankprod.html") && btn.textContent.includes("RankProd")) ||
+        (paginaAtual.includes("analytics.html") && btn.textContent.includes("Análises de Amostras")) ||
+        (paginaAtual.includes("rastreio_amostra.html") && btn.textContent.includes("Rastreio Amostras")) ||
         (paginaAtual.includes("dash.html") && btn.textContent.includes("Dashboard"))
 
     ) {

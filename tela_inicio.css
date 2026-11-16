@@ -34,7 +34,7 @@ body {
             rgba(255, 255, 255, 0.06),
             transparent 32%
         ),
-        #7185a6;
+        #162b4e;
 
     position: relative;
 }
@@ -811,14 +811,13 @@ body {
 
     position: fixed;
 
-    top: 25px;
-    right: 30px;
+    top: 24px;
+    right: 82px;
 
     width: 46px;
     height: 46px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
@@ -826,9 +825,9 @@ body {
 
     border-radius: 50%;
 
-    background: #c9c5c591;
+    background: rgba(255,255,255,0.08);
 
-    color:  #4c5f75;
+    color: #ffffff;
 
     cursor: pointer;
 
@@ -865,9 +864,7 @@ body {
     stroke-width: 1.7;
 
     stroke-linecap: round;
-
     stroke-linejoin: round;
-
 }
 
 
@@ -1230,4 +1227,89 @@ body {
 
     height: 7px;
     width: auto;
+}
+
+/* ============================================================
+   BOTÃO SAIR
+   ============================================================ */
+
+.logout-button {
+
+    position: fixed;
+
+    top: 24px;
+    right: 24px;
+
+    width: 46px;
+    height: 46px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(255,255,255,0.18);
+
+    border-radius: 50%;
+
+    background: rgba(255,255,255,0.08);
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    z-index: 21;
+
+    backdrop-filter: blur(8px);
+
+    transition:
+        background 0.25s ease,
+        transform 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease;
+
+    opacity: 0;
+
+    animation:
+        fadeEntrada 0.8s ease forwards;
+
+    animation-delay: 0.42s;
+}
+
+.logout-button svg {
+
+    width: 22px;
+    height: 22px;
+
+    fill: none;
+
+    stroke: currentColor;
+
+    stroke-width: 1.8;
+
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.logout-button:hover {
+
+    background: rgba(255,255,255,0.18);
+
+    color: #ffffff;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(20,40,70,0.18);
+}
+
+.logout-button:active {
+
+    transform: scale(0.94);
+}
+
+.logout-button:focus {
+
+    outline: 2px solid rgba(255,255,255,0.7);
+
+    outline-offset: 3px;
 }

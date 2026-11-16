@@ -1,5 +1,82 @@
+// ============================================================
+// PRESENÇA DO USUÁRIO — ONLINE / OFFLINE
+// ============================================================
+const PRESENCA_API = "https://rastreio-amostras-backend-production.up.railway.app";
+const PRESENCA_INTERVALO = 20000;
+let intervaloPresenca = null;
+let presencaFinalizada = false;
+
+// ============================================================
+// SESSÃO DO USUÁRIO
+// ============================================================
+
+function obterUsuarioLogado() {
+    return (
+        sessionStorage.getItem("usuarioLogado") ||
+        localStorage.getItem("usuarioLogado") ||
+        ""
+    );
+}
+
+function obterCodigoVendedor() {
+    return (
+        sessionStorage.getItem("codigoVendedor") ||
+        localStorage.getItem("codigoVendedor") ||
+        ""
+    );
+}
+
+function obterAcessoTotal() {
+
+    return (
+        sessionStorage.getItem("acessoTotal") ||
+        localStorage.getItem("acessoTotal") ||
+        "false"
+    );
+}
+
+function obterAcessoAdministrativo() {
+    return (
+        sessionStorage.getItem("acessoAdministrativo") ||
+        localStorage.getItem("acessoAdministrativo") ||
+        "false"
+    );
+}
+
+async function enviarPresencaOnline() {
+    const usuario = String(obterUsuarioLogado()).trim().toLowerCase();
+    if (!usuario || presencaFinalizada) return;
+    try {
+        await fetch(`${PRESENCA_API}/presenca/online`, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({usuario}), cache:"no-store", keepalive:true });
+    } catch (erro) { console.warn("⚠️ Não foi possível registrar presença:", erro); }
+}
+
+function iniciarPresenca() {
+    if (intervaloPresenca) clearInterval(intervaloPresenca);
+    presencaFinalizada = false;
+    enviarPresencaOnline();
+    intervaloPresenca = setInterval(enviarPresencaOnline, PRESENCA_INTERVALO);
+}
+
+function encerrarPresenca() {
+    if (presencaFinalizada) return;
+    presencaFinalizada = true;
+    if (intervaloPresenca) { clearInterval(intervaloPresenca); intervaloPresenca = null; }
+    const usuario = String(obterUsuarioLogado()).trim().toLowerCase();
+    if (!usuario) return;
+    const dados = JSON.stringify({usuario});
+    try {
+        const blob = new Blob([dados], {type:"application/json"});
+        if (navigator.sendBeacon) {
+            navigator.sendBeacon(`${PRESENCA_API}/presenca/offline`, blob);
+        } else {
+            fetch(`${PRESENCA_API}/presenca/offline`, {method:"POST",headers:{"Content-Type":"application/json"},body:dados,keepalive:true}).catch(()=>{});
+        }
+    } catch (erro) { console.warn("⚠️ Não foi possível registrar saída:", erro); }
+}
+
 // ================= CONFIG =================
-const API_URL = "http://127.0.0.1:8000/permissoes";
+const API_URL = "https://rastreio-amostras-backend-production.up.railway.app/permissoes";
 
 // cache
 let cachePermissoes = null;
@@ -31,28 +108,49 @@ async function obterPermissoes() {
         console.log("✅ Permissões carregadas:", data);
 
         // ================= 🔥 CONTROLE DE VERSÃO =================
-        const versaoLocal = localStorage.getItem("versaoPermissoes");
-        const usuario = localStorage.getItem("usuarioLogado");
+// ================= CONTROLE DE VERSÃO =================
 
-        // 🔥 IGNORA logout para o admin master
-        if (usuario !== "v.santos") {
-            if (versaoLocal && data.versao && versaoLocal != data.versao) {
-    console.warn("🔒 Permissões alteradas → forçando logout");
+const versaoLocal =
+    localStorage.getItem("versaoPermissoes");
 
-    localStorage.clear();
+const usuario =
+    sessionStorage.getItem("usuarioLogado") ||
+    localStorage.getItem("usuarioLogado");
 
-    if (!window.location.pathname.includes("index.html")) {
-        window.location.href = "index.html";
-    }
+if (
+    versaoLocal &&
+    data.versao &&
+    String(versaoLocal) !== String(data.versao)
+) {
 
-    return { usuarios: {} };
+    console.log(
+        "🔄 Permissões foram atualizadas no servidor.",
+        "Usuário:",
+        usuario,
+        "Versão local:",
+        versaoLocal,
+        "Versão servidor:",
+        data.versao
+    );
+
+    // IMPORTANTE:
+    // Não fazer logout.
+    // O usuário continua logado e recebe
+    // as permissões novas imediatamente.
 }
-        }
 
-        // salva nova versão
-        if (data.versao) {
-            localStorage.setItem("versaoPermissoes", data.versao);
-        }
+
+// ========================================================
+// SALVAR NOVA VERSÃO
+// ========================================================
+
+if (data.versao) {
+
+    localStorage.setItem(
+        "versaoPermissoes",
+        data.versao
+    );
+}
 
         // ========================================================
 
@@ -74,80 +172,351 @@ async function obterPermissoes() {
     }
 }
 
-async function salvarPermissoes(data) {
-    try {
-        await fetch(API_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        });
+async function obterPermissoesAtualizadas() {
 
-        console.log("💾 Permissões salvas no backend");
+    try {
+
+        console.log(
+            "🔄 Buscando permissões ATUAIS do Railway..."
+        );
+
+
+        const res = await fetch(
+            API_URL + "?t=" + Date.now(),
+            {
+                method: "GET",
+
+                cache: "no-store",
+
+                headers: {
+                    "Cache-Control": "no-cache",
+                    "Pragma": "no-cache"
+                }
+            }
+        );
+
+
+        if (!res.ok) {
+
+            throw new Error(
+                `Erro HTTP ${res.status}`
+            );
+
+        }
+
+
+        const data =
+            await res.json();
+
+
+        console.log(
+            "✅ Permissões atuais recebidas:",
+            data
+        );
+
+
+        cachePermissoes = data;
+
+
+        if (data.versao) {
+
+            localStorage.setItem(
+                "versaoPermissoes",
+                String(data.versao)
+            );
+
+        }
+
+
+        return data;
+
 
     } catch (e) {
-        console.warn("⚠️ Salvando apenas local (offline)");
+
+        console.error(
+            "❌ Erro ao buscar permissões atuais:",
+            e
+        );
+
+        throw e;
+
     }
 
-    localStorage.setItem("permissoes", JSON.stringify(data));
-    cachePermissoes = data;
+}
+async function salvarPermissoes(data) {
+
+    console.log("💾 Enviando permissões para o backend...");
+    console.log("📦 Dados enviados:", data);
+
+    try {
+
+        const res = await fetch(
+            API_URL + "?t=" + Date.now(),
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + (sessionStorage.getItem('app_session_token') || localStorage.getItem('app_session_token') || ''),
+                    "Cache-Control": "no-cache"
+                },
+
+                body: JSON.stringify(data)
+            }
+        );
+
+
+        let resposta = {};
+
+        try {
+            resposta = await res.json();
+        } catch {
+            resposta = {};
+        }
+
+
+        console.log(
+            "📡 Resposta do backend:",
+            res.status,
+            resposta
+        );
+
+
+        if (!res.ok) {
+
+            throw new Error(
+                resposta.detail ||
+                resposta.erro ||
+                `Erro HTTP ${res.status}`
+            );
+
+        }
+
+
+        if (resposta.ok !== true) {
+
+            throw new Error(
+                "O backend não confirmou o salvamento das permissões."
+            );
+
+        }
+
+
+        console.log(
+            "✅ Permissões salvas no Railway com sucesso."
+        );
+
+
+        // =====================================================
+        // LIMPA TODOS OS CACHES LOCAIS
+        // =====================================================
+
+        cachePermissoes = null;
+
+        localStorage.removeItem("permissoes");
+        localStorage.removeItem("versaoPermissoes");
+
+
+        // NÃO guardar "data" no cache.
+        // Na próxima consulta vamos buscar
+        // novamente o que realmente está no Railway.
+
+
+        return true;
+
+
+    } catch (e) {
+
+        console.error(
+            "❌ NÃO FOI POSSÍVEL SALVAR PERMISSÕES:",
+            e
+        );
+
+
+        throw e;
+
+    }
+
 }
 
 // ================= PERMISSÃO =================
+
+// ================= PERMISSÃO =================
+
 async function temPermissaoTela(usuario, tela) {
 
-    const user = usuario?.trim().toLowerCase();
+    const user =
+        String(usuario || "")
+            .trim()
+            .toLowerCase();
 
+    const telaNormalizada =
+        String(tela || "")
+            .trim()
+            .toLowerCase();
 
-    // =========================================================
-    // RASTREIO AMOSTRAS
-    // REGRA FIXA: TODOS POSSUEM ACESSO
-    // NÃO ESPERA A API
-    // =========================================================
+    console.log("=================================");
+    console.log("🔐 VERIFICANDO PERMISSÃO");
+    console.log("Usuário:", user);
+    console.log("Tela:", telaNormalizada);
+    console.log("=================================");
 
-    if (tela === "rastreio_amostra") {
+    // =====================================================
+    // RASTREIO
+    // =====================================================
+
+    if (telaNormalizada === "rastreio_amostra") {
+
+        console.log(
+            "✅ Rastreio liberado pela regra geral."
+        );
+
         return true;
     }
 
-
-    // =========================================================
-    // A PARTIR DAQUI PODE CONSULTAR AS PERMISSÕES
-    // =========================================================
-
-    const permissoes = await obterPermissoes();
-
-    const acessoTotal =
-        localStorage.getItem("acessoTotal") === "true";
-
-
+    // =====================================================
     // SUPER ADMIN
+    // =====================================================
 
     if (user === "v.santos") {
+
+        console.log(
+            "👑 SUPER ADMIN"
+        );
+
         return true;
     }
 
+    // =====================================================
+    // CÓDIGO DO VENDEDOR
+    // =====================================================
 
+    const codigoVendedor =
+        String(obterCodigoVendedor() || "")
+            .trim()
+            .toUpperCase();
+
+    console.log(
+        "🏷️ Código do vendedor:",
+        codigoVendedor
+    );
+
+    // =====================================================
     // ACESSO TOTAL
+    // =====================================================
+
+    const acessoTotal =
+        obterAcessoTotal() === "true";
 
     if (acessoTotal) {
+
+        console.log(
+            "✅ Usuário possui acesso total."
+        );
+
         return true;
     }
 
+    // =====================================================
+    // ACESSO ADMINISTRATIVO
+    // =====================================================
 
-    // PERMISSÕES INDIVIDUAIS
+    const acessoAdministrativo =
+        obterAcessoAdministrativo() === "true";
 
-    const config = permissoes?.usuarios?.[user];
+    if (
+        telaNormalizada === "admin" &&
+        acessoAdministrativo
+    ) {
+
+        console.log(
+            "🛡️ Usuário possui acesso administrativo."
+        );
+
+        return true;
+    }
+
+    // =====================================================
+    // BUSCAR PERMISSÕES ATUAIS
+    // =====================================================
+
+    const permissoes =
+        await obterPermissoesAtualizadas();
+
+    // =====================================================
+    // LOCALIZAR USUÁRIO
+    // =====================================================
+
+    const config =
+        permissoes?.usuarios?.[user];
+
+    console.log(
+        "👤 Configuração encontrada:",
+        config
+    );
 
     if (!config) {
+
+        console.warn(
+            "❌ Usuário não encontrado nas permissões:",
+            user
+        );
+
         return false;
     }
 
-    if (config.telas?.includes("*")) {
+    // =====================================================
+    // TELAS
+    // =====================================================
+
+    const telas =
+        Array.isArray(config.telas)
+            ? config.telas
+            : [];
+
+    const telasNormalizadas =
+        telas.map(
+            t =>
+                String(t)
+                    .trim()
+                    .toLowerCase()
+        );
+
+    console.log(
+        "📋 Telas permitidas:",
+        telasNormalizadas
+    );
+
+    // =====================================================
+    // ACESSO TOTAL "*"
+    // =====================================================
+
+    if (
+        telasNormalizadas.includes("*")
+    ) {
+
+        console.log(
+            "✅ Permissão total (*)"
+        );
+
         return true;
     }
 
-    return config.telas?.includes(tela) || false;
+    // =====================================================
+    // VERIFICAR TELA
+    // =====================================================
+
+    const permitido =
+        telasNormalizadas.includes(
+            telaNormalizada
+        );
+
+    console.log(
+        "🔐 Resultado:",
+        permitido
+    );
+
+    return permitido;
 }
 
 // ================= MENU =================
@@ -155,205 +524,536 @@ async function temPermissaoTela(usuario, tela) {
 // ================= MENU =================
 async function controlarMenu() {
 
-    const usuario = localStorage.getItem("usuarioLogado");
+    const usuario =
+    obterUsuarioLogado();
 
-    const botoes = document.querySelectorAll("[data-tela]");
+    const botoes =
+        document.querySelectorAll("[data-tela]");
+
+
+    console.log(
+        "👤 Controlando menu para:",
+        usuario
+    );
+
 
     // =====================================================
-    // 1. COLOCA TODOS OS CARDS EM "AGUARDANDO SISTEMA"
-    //    IMEDIATAMENTE
+    // 1. COLOCAR CARDS EM CARREGAMENTO
     // =====================================================
 
     botoes.forEach(btn => {
 
-        const tela = btn.dataset.tela;
+        const tela =
+            btn.dataset.tela;
 
-        // Rastreio não precisa esperar permissão
+
         if (tela === "rastreio_amostra") {
-            btn.classList.remove("aguardando-permissao");
-            btn.classList.remove("desativado");
+
+            btn.classList.remove(
+                "aguardando-permissao"
+            );
+
+            btn.classList.remove(
+                "desativado"
+            );
+
             return;
         }
 
-        // Card entra imediatamente em carregamento
-        btn.classList.add("aguardando-permissao");
-        btn.classList.remove("desativado");
 
-        // Texto original
-        const descricao = btn.querySelector(".card-description");
+        btn.classList.add(
+            "aguardando-permissao"
+        );
+
+        btn.classList.remove(
+            "desativado"
+        );
+
+
+        const descricao =
+            btn.querySelector(
+                ".card-description"
+            );
+
 
         if (descricao) {
-            descricao.dataset.textoOriginal = descricao.textContent.trim();
-            descricao.textContent = "Aguardando sistema";
+
+            descricao.dataset.textoOriginal =
+                descricao.textContent.trim();
+
+            descricao.textContent =
+                "Aguardando sistema";
         }
 
-        // Troca a seta pelo spinner
-        const arrow = btn.querySelector(".card-arrow");
+
+        const arrow =
+            btn.querySelector(
+                ".card-arrow"
+            );
+
 
         if (arrow) {
-            arrow.classList.add("loading-icon");
+
+            arrow.classList.add(
+                "loading-icon"
+            );
+
             arrow.textContent = "↻";
         }
+
     });
 
 
     // =====================================================
-    // 2. VERIFICA TODAS AS PERMISSÕES AO MESMO TEMPO
+    // 2. BUSCAR PERMISSÕES UMA ÚNICA VEZ
     // =====================================================
 
-    const verificacoes = Array.from(botoes)
-        .filter(btn => btn.dataset.tela !== "rastreio_amostra")
-        .map(async btn => {
+    let permissoes;
 
-            const tela = btn.dataset.tela;
+    try {
 
-            try {
+        permissoes =
+            await obterPermissoesAtualizadas();
 
-                const permitido =
-                    await temPermissaoTela(usuario, tela);
+    } catch (erro) {
 
-
-                // =========================================
-                // REMOVE ESTADO DE CARREGAMENTO
-                // =========================================
-
-                btn.classList.remove("aguardando-permissao");
+        console.error(
+            "❌ Não foi possível carregar permissões:",
+            erro
+        );
 
 
-                // =========================================
-                // RESTAURA TEXTO ORIGINAL
-                // =========================================
+        botoes.forEach(btn => {
 
-                const descricao =
-                    btn.querySelector(".card-description");
+            if (
+                btn.dataset.tela ===
+                "rastreio_amostra"
+            ) {
+                return;
+            }
 
-                if (descricao && descricao.dataset.textoOriginal) {
-                    descricao.textContent =
-                        descricao.dataset.textoOriginal;
-                }
+            btn.classList.remove(
+                "aguardando-permissao"
+            );
 
+            btn.classList.add(
+                "desativado"
+            );
 
-                // =========================================
-                // RESTAURA SETA
-                // =========================================
-
-                const arrow =
-                    btn.querySelector(".card-arrow");
-
-                if (arrow) {
-                    arrow.classList.remove("loading-icon");
-                    arrow.textContent = "→";
-                }
-
-
-                // =========================================
-                // APLICA RESULTADO
-                // =========================================
-
-                if (!permitido) {
-
-                    btn.classList.add("desativado");
-
-                } else {
-
-                    btn.classList.remove("desativado");
-                }
-
-
-            } catch (e) {
-
-                console.error(
-                    "Erro ao verificar permissão:",
-                    tela,
-                    e
+            const descricao =
+                btn.querySelector(
+                    ".card-description"
                 );
 
-                btn.classList.remove("aguardando-permissao");
+            if (descricao) {
 
-                btn.classList.add("desativado");
-
-
-                const descricao =
-                    btn.querySelector(".card-description");
-
-                if (descricao) {
-                    descricao.textContent =
-                        descricao.dataset.textoOriginal ||
-                        "Acesso indisponível";
-                }
-
-
-                const arrow =
-                    btn.querySelector(".card-arrow");
-
-                if (arrow) {
-                    arrow.classList.remove("loading-icon");
-                    arrow.textContent = "🔒";
-                }
+                descricao.textContent =
+                    "Acesso indisponível";
             }
+
         });
 
 
+        return;
+    }
+
+
     // =====================================================
-    // 3. AGUARDA TODAS AS CONSULTAS
+    // 3. NORMALIZAR USUÁRIO
     // =====================================================
 
-    await Promise.all(verificacoes);
+    const user =
+        String(usuario || "")
+            .trim()
+            .toLowerCase();
+
+
+    console.log(
+        "🔐 Permissões carregadas para:",
+        user
+    );
+
+
+    // =====================================================
+    // 4. CONFIGURAÇÃO DO USUÁRIO
+    // =====================================================
+
+    const config =
+        permissoes?.usuarios?.[user] || {};
+
+
+    const telas =
+        Array.isArray(config.telas)
+            ? config.telas.map(
+                tela =>
+                    String(tela)
+                        .trim()
+                        .toLowerCase()
+            )
+            : [];
+
+
+    console.log(
+        "📋 Telas permitidas:",
+        telas
+    );
+
+
+    // =====================================================
+    // 5. ACESSO TOTAL
+    // =====================================================
+
+    const acessoTotal =
+    user === "v.santos" ||
+    obterAcessoTotal() === "true" ||
+    telas.includes("*");
+
+const acessoAdministrativo =
+    obterAcessoAdministrativo() === "true";
+
+
+    // =====================================================
+    // 6. APLICAR PERMISSÕES
+    // =====================================================
+
+    botoes.forEach(btn => {
+
+        const tela =
+            String(btn.dataset.tela || "")
+                .trim()
+                .toLowerCase();
+
+
+        // Rastreio sempre liberado
+        let permitido =
+            tela === "rastreio_amostra";
+
+
+        // =================================================
+// ADMIN / ACESSO TOTAL
+// =================================================
+
+if (acessoTotal) {
+
+    permitido = true;
+
+}
+
+
+// =================================================
+// ACESSO ADMINISTRATIVO
+// =================================================
+
+else if (
+    tela === "admin" &&
+    acessoAdministrativo
+) {
+
+    permitido = true;
+
+}
+
+
+// =================================================
+// PERMISSÕES NORMAIS
+// =================================================
+
+else if (!permitido) {
+
+    permitido =
+        telas.includes(tela);
+
+}
+
+
+        console.log(
+            `🔐 ${tela}:`,
+            permitido
+        );
+
+
+        // =================================================
+        // REMOVE LOADING
+        // =================================================
+
+        btn.classList.remove(
+            "aguardando-permissao"
+        );
+
+
+        // =================================================
+        // RESTAURA DESCRIÇÃO
+        // =================================================
+
+        const descricao =
+            btn.querySelector(
+                ".card-description"
+            );
+
+
+        if (
+            descricao &&
+            descricao.dataset.textoOriginal
+        ) {
+
+            descricao.textContent =
+                descricao.dataset.textoOriginal;
+
+        }
+
+
+        // =================================================
+        // RESTAURA SETA
+        // =================================================
+
+        const arrow =
+            btn.querySelector(
+                ".card-arrow"
+            );
+
+
+        if (arrow) {
+
+            arrow.classList.remove(
+                "loading-icon"
+            );
+
+            arrow.textContent =
+                permitido
+                    ? "→"
+                    : "🔒";
+
+        }
+
+
+        // =================================================
+        // APLICA ESTADO
+        // =================================================
+
+        if (permitido) {
+
+            btn.classList.remove(
+                "desativado"
+            );
+
+        } else {
+
+            btn.classList.add(
+                "desativado"
+            );
+
+        }
+
+    });
+
 }
 
 // ================= NAVEGAÇÃO =================
 function protegerNavegacao() {
-    const usuario = localStorage.getItem("usuarioLogado");
 
-    const botoes = document.querySelectorAll("[data-tela]");
+    const usuario =
+        sessionStorage.getItem("usuarioLogado") ||
+        localStorage.getItem("usuarioLogado");
+
+    const botoes =
+        document.querySelectorAll("[data-tela]");
 
     botoes.forEach(btn => {
-        btn.addEventListener("click", async function () {
-            const tela = btn.dataset.tela;
-            const link = btn.dataset.link;
 
-            const permitido = await temPermissaoTela(usuario, tela);
+        btn.addEventListener(
+            "click",
+            async function (event) {
 
-            if (!permitido) {
-                alert("Usuário sem permissão para acessar essa aba");
-                return;
+                event.preventDefault();
+
+                const tela =
+                    btn.dataset.tela;
+
+                const link =
+                    btn.dataset.link;
+
+                const permitido =
+                    await temPermissaoTela(
+                        usuario,
+                        tela
+                    );
+
+                if (!permitido) {
+
+                    alert(
+                        "Usuário sem permissão para acessar essa aba"
+                    );
+
+                    return;
+                }
+
+                if (link) {
+
+                    window.location.href =
+                        link;
+                }
             }
-
-            if (link) {
-                window.location.href = link;
-            }
-        });
+        );
     });
 }
 
 // ================= PROTEÇÃO DE PÁGINA =================
+// ================= PROTEÇÃO DE PÁGINA =================
 async function protegerPagina() {
-    const usuario = localStorage.getItem("usuarioLogado");
 
-    const telaAtual = window.location.pathname
-        .split("/")
-        .pop()
-        .replace(".html", "");
+    const usuario = obterUsuarioLogado();
 
-    console.log("📍 Tela atual:", telaAtual);
+    const codigoVendedor =
+        String(obterCodigoVendedor() || "")
+            .trim()
+            .toUpperCase();
 
-    // 🔥 NÃO BLOQUEIA TELA INICIAL
-    if (telaAtual === "tela_inicio") return;
+    const acessoAdministrativo =
+        obterAcessoAdministrativo() === "true";
 
-    const permitido = await temPermissaoTela(usuario, telaAtual);
+    const acessoTotal =
+        obterAcessoTotal() === "true";
 
-    console.log("🔐 Permissão:", permitido);
+    const telaAtual =
+        window.location.pathname
+            .split("/")
+            .pop()
+            .replace(".html", "")
+            .toLowerCase();
+
+    console.log("=================================");
+    console.log("🔐 PROTEÇÃO DE PÁGINA");
+    console.log("📍 Tela:", telaAtual);
+    console.log("👤 Usuário:", usuario);
+    console.log("🏷️ Código vendedor:", codigoVendedor);
+    console.log("🛡️ Acesso administrativo:", acessoAdministrativo);
+    console.log("👑 Acesso total:", acessoTotal);
+    console.log("=================================");
+
+
+    // =====================================================
+    // TELA INICIAL
+    // =====================================================
+
+    if (telaAtual === "tela_inicio") {
+        return;
+    }
+
+
+    // =====================================================
+    // ADMIN
+    // =====================================================
+
+    if (telaAtual === "admin") {
+
+
+        // Usuário com acesso administrativo
+        if (acessoAdministrativo) {
+
+            console.log(
+                "🛡️ Acesso administrativo autorizado."
+            );
+
+            return;
+        }
+
+
+        // Usuário com acesso total
+        if (acessoTotal) {
+
+            console.log(
+                "👑 Acesso total autorizado para Admin."
+            );
+
+            return;
+        }
+
+
+        // Permissão cadastrada no Railway
+        try {
+
+            const permitido =
+                await temPermissaoTela(
+                    usuario,
+                    "admin"
+                );
+
+            console.log(
+                "🔐 Permissão Admin no Railway:",
+                permitido
+            );
+
+
+            if (permitido) {
+
+                console.log(
+                    "✅ Admin autorizado pelas permissões do Railway."
+                );
+
+                return;
+            }
+
+        } catch (erro) {
+
+            console.error(
+                "❌ Erro ao verificar permissão do Admin:",
+                erro
+            );
+
+        }
+
+
+        // Se chegou aqui, realmente não possui acesso
+        console.warn(
+            "🚫 ACESSO ADMIN NEGADO."
+        );
+
+        alert(
+            "Você não tem acesso ao painel administrativo."
+        );
+
+        window.location.href =
+            "tela_inicio.html";
+
+        return;
+    }
+
+
+    // =====================================================
+    // DEMAIS TELAS
+    // =====================================================
+
+    const permitido =
+        await temPermissaoTela(
+            usuario,
+            telaAtual
+        );
+
+    console.log(
+        "🔐 Permissão:",
+        permitido
+    );
+
 
     if (!permitido) {
-        alert("Você não tem acesso a essa página.");
-        window.location.href = "tela_inicio.html";
+
+        alert(
+            "Você não tem acesso a essa página."
+        );
+
+        window.location.href =
+            "tela_inicio.html";
     }
 }
 
 // ================= INIT =================
 document.addEventListener("DOMContentLoaded", async () => {
 
-    if (window.__initPermissoesExecutado) return;
+    iniciarPresenca();
+
+    if (window.__initPermissoesExecutado) {
+        return;
+    }
 
     window.__initPermissoesExecutado = true;
 
@@ -361,22 +1061,56 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
 
-        // Primeiro organiza visualmente os cards
-        // Rastreio fica liberado imediatamente
-        // Os demais ficam aguardando
+        const telaAtual =
+            window.location.pathname
+                .split("/")
+                .pop()
+                .replace(".html", "")
+                .toLowerCase();
+
+        console.log("=================================");
+        console.log("🔐 INICIALIZAÇÃO DO SISTEMA");
+        console.log("📍 Tela atual:", telaAtual);
+        console.log("👤 Usuário:", obterUsuarioLogado());
+        console.log("🏷️ Código vendedor:", obterCodigoVendedor());
+        console.log("=================================");
+
+
+        // =====================================================
+        // ADMIN
+        // =====================================================
+
+        if (telaAtual === "admin") {
+
+            console.log(
+                "🛡️ Página Admin detectada."
+            );
+
+            console.log(
+                "➡️ A validação será feita exclusivamente pelo admin.js."
+            );
+
+            return;
+        }
+
+
+        // =====================================================
+        // TELA NORMAL
+        // =====================================================
+
         await controlarMenu();
 
-
-        // Depois ativa a proteção dos cliques
         protegerNavegacao();
 
-
-        // Protege a página atual
         await protegerPagina();
+
 
     } catch (e) {
 
-        console.error("❌ Erro geral:", e);
+        console.error(
+            "❌ Erro geral:",
+            e
+        );
 
     } finally {
 
@@ -406,4 +1140,54 @@ document.querySelectorAll("[data-tela]").forEach(btn => {
 
 document.addEventListener("DOMContentLoaded", () => {
     document.body.classList.add("fade-in");
+});
+window.addEventListener("pagehide", encerrarPresenca);
+window.addEventListener("beforeunload", encerrarPresenca);
+// ============================================================
+// LOGOUT
+// ============================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const btnLogout =
+        document.getElementById("btnLogout");
+
+    if (!btnLogout) return;
+
+    btnLogout.addEventListener("click", () => {
+
+        // ================================================
+        // ENCERRAR PRESENÇA
+        // ================================================
+
+        encerrarPresenca();
+
+
+        // ================================================
+        // LIMPAR DADOS DE LOGIN
+        // ================================================
+
+        localStorage.removeItem("usuarioLogado");
+        localStorage.removeItem("codigoVendedor");
+        localStorage.removeItem("acessoTotal");
+        localStorage.removeItem("acessoAdministrativo");
+        localStorage.removeItem("manterConectado");
+        localStorage.removeItem("app_session_token");
+        sessionStorage.removeItem("app_session_token");
+
+
+        sessionStorage.removeItem("usuarioLogado");
+        sessionStorage.removeItem("codigoVendedor");
+        sessionStorage.removeItem("acessoTotal");
+        sessionStorage.removeItem("acessoAdministrativo");
+
+
+        // ================================================
+        // VOLTAR PARA LOGIN
+        // ================================================
+
+        window.location.href = "index.html";
+
+    });
+
 });

@@ -1,14 +1,175 @@
 document.addEventListener("DOMContentLoaded", function () {
 
     // ============================================================
+    // VERIFICAR LOGIN PERSISTENTE
+    // ============================================================
+
+    const usuarioPersistente =
+        localStorage.getItem("usuarioLogado");
+
+    const manterConectadoPersistente =
+        localStorage.getItem("manterConectado");
+
+    if (
+        usuarioPersistente &&
+        manterConectadoPersistente === "true"
+    ) {
+
+        console.log(
+            "Login persistente encontrado:",
+            usuarioPersistente
+        );
+
+        window.location.href =
+            "tela_inicio.html";
+
+        return;
+    }
+
+
+    // ============================================================
     // ELEMENTOS DO LOGIN
     // ============================================================
 
     const formLogin = document.getElementById("formLogin");
     const erroLogin = document.getElementById("erroLogin");
+    const manterConectado =
+        document.getElementById("manterConectado");
+// ============================================================
+// CADASTRO DE NOVA CONTA
+// ============================================================
 
+const btnCriarConta =
+    document.getElementById("btnCriarConta");
+
+const areaCadastro =
+    document.getElementById("areaCadastro");
+
+const etapaCadastro1 =
+    document.getElementById("etapaCadastro1");
+
+const etapaCadastro2 =
+    document.getElementById("etapaCadastro2");
+
+const btnValidarCadastro =
+    document.getElementById("btnValidarCadastro");
+
+const btnFinalizarCadastro =
+    document.getElementById("btnFinalizarCadastro");
+
+const btnVoltarLogin =
+    document.getElementById("btnVoltarLogin");
+
+const erroCadastro =
+    document.getElementById("erroCadastro");
+const separadorLogin =
+    document.querySelector(".separador-login");
+
+const painelLogoQuatroK =
+    document.getElementById("painelLogoQuatroK");
+let cadastroToken = null;
     const usuariosFullAccess = ["v.santos"];
 
+    // ============================================================
+// GERENCIAMENTO DA SESSÃO
+// ============================================================
+
+function limparSessaoLogin() {
+
+    // Remove login persistente
+    localStorage.removeItem("usuarioLogado");
+    localStorage.removeItem("codigoVendedor");
+    localStorage.removeItem("acessoTotal");
+    localStorage.removeItem("acessoAdministrativo");
+    localStorage.removeItem("manterConectado");
+    localStorage.removeItem("nomeCompleto");
+
+    // Remove login da sessão atual
+    sessionStorage.removeItem("usuarioLogado");
+    sessionStorage.removeItem("codigoVendedor");
+    sessionStorage.removeItem("nomeCompleto");
+    sessionStorage.removeItem("acessoTotal");
+    sessionStorage.removeItem("acessoAdministrativo");
+    sessionStorage.removeItem("app_session_token");
+localStorage.removeItem("app_session_token");
+}
+
+
+function salvarSessaoLogin(
+    usuario,
+    codigo,
+    nomeCompleto,
+    acessoTotal,
+    acessoAdministrativo,
+    manterConectado
+) {
+
+    // Primeiro limpa qualquer login anterior
+    limparSessaoLogin();
+
+
+    // ========================================================
+    // MANTER CONECTADO
+    // ========================================================
+
+    if (manterConectado) {
+
+        localStorage.setItem(
+            "usuarioLogado",
+            usuario
+        );
+
+        localStorage.setItem(
+    "nomeCompleto",
+    nomeCompleto || ""
+);
+
+        localStorage.setItem(
+            "acessoTotal",
+            String(acessoTotal)
+        );
+
+        localStorage.setItem(
+            "acessoAdministrativo",
+            String(acessoAdministrativo)
+        );
+
+        localStorage.setItem(
+            "manterConectado",
+            "true"
+        );
+
+    }
+
+    // ========================================================
+    // APENAS DURANTE A SESSÃO
+    // ========================================================
+
+    else {
+
+        sessionStorage.setItem(
+            "usuarioLogado",
+            usuario
+        );
+
+        sessionStorage.setItem(
+    "nomeCompleto",
+    nomeCompleto || ""
+);
+
+        sessionStorage.setItem(
+            "acessoTotal",
+            String(acessoTotal)
+        );
+
+        sessionStorage.setItem(
+            "acessoAdministrativo",
+            String(acessoAdministrativo)
+        );
+
+    }
+
+}
 
     // ============================================================
     // PLANILHA
@@ -48,7 +209,7 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
 
             const resposta = await fetch(
-                "http://127.0.0.1:8000/login",
+                "https://rastreio-amostras-backend-production.up.railway.app/login",
                 {
                     method: "POST",
 
@@ -66,22 +227,48 @@ document.addEventListener("DOMContentLoaded", function () {
 
             let data = {};
 
-            let codigo = null;
+let codigo = null;
+
+let nomeCompleto = usuario;
 
 
-            try {
+try {
 
-                data = await resposta.json();
+    data = await resposta.json();
 
-                codigo =
-                    data?.seller_code || null;
+    // A sessao e armazenada somente apos salvarSessaoLogin().
 
-            } catch {
+    codigo = data?.seller_code || null;
 
-                codigo = null;
+    nomeCompleto =
+        data?.nome_completo ||
+        data?.seller_name ||
+        usuario;
 
-            }
+} catch {
 
+    codigo = null;
+
+}
+
+const codigoNormalizado =
+    normalizarCodigo(codigo).toUpperCase();
+
+const acessoAdministrativo = false;
+
+const acessoADMIN1 =
+    codigoNormalizado === "ADMIN1";
+
+    console.log("================================");
+console.log("RESULTADO DO LOGIN");
+console.log("Usuário:", usuario);
+console.log("Código retornado pelo backend:", codigo);
+console.log("Código normalizado:", codigoNormalizado);
+console.log("Acesso total:", acessoTotal);
+console.log("Acesso administrativo:", acessoAdministrativo);
+console.log("Status HTTP:", resposta.status);
+console.log("Resposta backend:", data);
+console.log("================================");
 
             // ====================================================
             // ERRO 401
@@ -100,16 +287,18 @@ document.addEventListener("DOMContentLoaded", function () {
             // ERRO 404
             // ====================================================
 
-            if (
-                resposta.status === 404 &&
-                !acessoTotal
-            ) {
+   if (
+    resposta.status === 409 &&
+    !acessoTotal &&
+    !acessoAdministrativo
+) {
 
-                erroLogin.innerText =
-                    "Usuário sem código de vendedor.";
+    erroLogin.innerText =
+        data?.detail ||
+        "Usuário válido no Protheus, mas ainda não possui cadastro. Clique em 'Criar nova conta'.";
 
-                return;
-            }
+    return;
+}
 
 
             // ====================================================
@@ -142,84 +331,132 @@ document.addEventListener("DOMContentLoaded", function () {
                         // ACESSO TOTAL
                         // ====================================================
 
-                        if (acessoTotal) {
+if (acessoTotal) {
 
-                            dadosFiltrados =
-                                dados;
+    dadosFiltrados = dados;
 
-                        }
+}
+else if (acessoADMIN1) {
 
+    // ADMIN1 pode entrar na tela inicial
+    // mesmo sem possuir registros na planilha.
+    //
+    // IMPORTANTE:
+    // isso NÃO dá acesso ao Admin.
+    // O acesso ao Admin continuará sendo
+    // controlado exclusivamente pelas permissões.
 
-                        // ====================================================
-                        // ACESSO DO VENDEDOR
-                        // ====================================================
+    dadosFiltrados = [];
 
-                        else {
+}
+else {
 
-                            dadosFiltrados =
-                                dados.filter(
-                                    function (linha) {
+    dadosFiltrados =
+        dados.filter(
+            function (linha) {
 
-                                        return (
-                                            normalizarCodigo(
-                                                linha[22]
-                                            ) ===
-                                            normalizarCodigo(
-                                                codigo
-                                            )
-                                        );
+                return (
+                    normalizarCodigo(
+                        linha[22]
+                    ) ===
+                    normalizarCodigo(
+                        codigo
+                    )
+                );
 
-                                    }
-                                );
+            }
+        );
 
-                        }
+}
 
 
                         // ====================================================
                         // NENHUM REGISTRO
                         // ====================================================
 
-                        if (
-                            !acessoTotal &&
-                            dadosFiltrados.length === 0
-                        ) {
+if (
+    !acessoTotal &&
+    !acessoAdministrativo &&
+    !acessoADMIN1 &&
+    dadosFiltrados.length === 0
+) {
 
-                            erroLogin.innerText =
-                                "Nenhum registro encontrado para este vendedor.";
+    erroLogin.innerText =
+        "Nenhum registro encontrado para este vendedor.";
 
-                            return;
-                        }
+    return;
+}
 
 
                         // ====================================================
                         // SALVAR DADOS
                         // ====================================================
 
-                        localStorage.setItem(
-                            "dadosFiltrados",
-                            JSON.stringify(
-                                dadosFiltrados
-                            )
-                        );
+// ====================================================
+// SALVAR RASTREIOS
+// ====================================================
+
+const dadosRastreios =
+    JSON.stringify(dadosFiltrados);
 
 
-                        localStorage.setItem(
-                            "usuarioLogado",
-                            usuario
-                        );
+if (
+    manterConectado &&
+    manterConectado.checked
+) {
+
+    // Login persistente
+    localStorage.setItem(
+        "dadosFiltrados",
+        dadosRastreios
+    );
+
+    // Garante que não exista uma versão antiga
+    // dos rastreios na sessão temporária
+    sessionStorage.removeItem(
+        "dadosFiltrados"
+    );
+
+} else {
+
+    // Login somente durante esta sessão
+    sessionStorage.setItem(
+        "dadosFiltrados",
+        dadosRastreios
+    );
+
+    // IMPORTANTE:
+    // Remove qualquer rastreio antigo que tenha
+    // ficado salvo de um login persistente anterior.
+    localStorage.removeItem(
+        "dadosFiltrados"
+    );
+
+}
 
 
-                        localStorage.setItem(
-                            "codigoVendedor",
-                            codigo || ""
-                        );
+                        // ============================================================
+// SALVAR SESSÃO
+// ============================================================
 
+salvarSessaoLogin(
+    usuario,
+    codigo,
+    nomeCompleto,
+    acessoTotal,
+    acessoAdministrativo,
+    manterConectado &&
+    manterConectado.checked
+);
 
-                        localStorage.setItem(
-                            "acessoTotal",
-                            acessoTotal
-                        );
-
+// Salvar apos a limpeza feita por salvarSessaoLogin().
+if (!data?.app_session_token) {
+    console.error("Login sem app_session_token: confira a versao do backend no Railway.");
+    erroLogin.innerText = "Sessão não recebida do servidor. Contate o administrador.";
+    return;
+}
+sessionStorage.setItem("app_session_token", data.app_session_token);
+localStorage.setItem("app_session_token", data.app_session_token);
 
                         // ====================================================
                         // REDIRECIONAMENTO
@@ -268,7 +505,686 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
     });
+    // ============================================================
+// CADASTRO DE NOVA CONTA
+// ============================================================
 
+// ------------------------------------------------------------
+// ABRIR TELA DE CADASTRO
+// ------------------------------------------------------------
+
+if (btnCriarConta) {
+
+    btnCriarConta.addEventListener(
+        "click",
+        function () {
+
+            // ------------------------------------------------
+            // ESCONDER LOGIN
+            // ------------------------------------------------
+
+            formLogin.style.display = "none";
+
+            separadorLogin.style.display = "none";
+
+            painelLogoQuatroK.style.display = "none";
+
+
+            // ------------------------------------------------
+            // PREPARAR CADASTRO
+            // ------------------------------------------------
+
+            areaCadastro.style.display = "block";
+
+
+            // força o navegador a reconhecer o display
+            requestAnimationFrame(function () {
+
+                requestAnimationFrame(function () {
+
+                    areaCadastro.classList.add(
+                        "cadastro-aberto"
+                    );
+
+                });
+
+            });
+
+
+            // ------------------------------------------------
+            // COMEÇAR NA ETAPA 1
+            // ------------------------------------------------
+
+            etapaCadastro1.style.display =
+                "block";
+
+            etapaCadastro2.style.display =
+                "none";
+
+
+            // ------------------------------------------------
+            // LIMPAR MENSAGENS
+            // ------------------------------------------------
+
+            erroCadastro.innerText = "";
+
+            erroCadastro.style.color = "";
+
+
+            // ------------------------------------------------
+            // LIMPAR TOKEN
+            // ------------------------------------------------
+
+            cadastroToken = null;
+
+
+            // ------------------------------------------------
+            // LIMPAR CAMPOS
+            // ------------------------------------------------
+
+            document.getElementById(
+                "cadastroUsuario"
+            ).value = "";
+
+            document.getElementById(
+                "cadastroSenha"
+            ).value = "";
+
+            document.getElementById(
+                "cadastroCodigoVendedor"
+            ).value = "";
+            document.getElementById(
+    "cadastroNomeCompleto"
+).value = "";
+
+document.getElementById(
+    "cadastroEmail"
+).value = "";
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// VOLTAR PARA LOGIN
+// ------------------------------------------------------------
+
+if (btnVoltarLogin) {
+
+    btnVoltarLogin.addEventListener(
+        "click",
+        function () {
+
+            // ------------------------------------------------
+            // FECHAR ANIMAÇÃO
+            // ------------------------------------------------
+
+            areaCadastro.classList.remove(
+                "cadastro-aberto"
+            );
+
+
+            // ------------------------------------------------
+            // ESPERAR A ANIMAÇÃO TERMINAR
+            // ------------------------------------------------
+
+            setTimeout(function () {
+
+                areaCadastro.style.display =
+                    "none";
+
+
+                // ------------------------------------------------
+                // MOSTRAR LOGIN
+                // ------------------------------------------------
+
+                formLogin.style.display =
+                    "flex";
+
+                separadorLogin.style.display =
+                    "";
+
+                painelLogoQuatroK.style.display =
+                    "";
+
+
+                // ------------------------------------------------
+                // RESETAR CADASTRO
+                // ------------------------------------------------
+
+                etapaCadastro1.style.display =
+                    "block";
+
+                etapaCadastro2.style.display =
+                    "none";
+
+                erroCadastro.innerText = "";
+
+                erroCadastro.style.color = "";
+
+                cadastroToken = null;
+
+
+                document.getElementById(
+                    "cadastroUsuario"
+                ).value = "";
+
+                document.getElementById(
+                    "cadastroSenha"
+                ).value = "";
+
+                document.getElementById(
+                    "cadastroCodigoVendedor"
+                ).value = "";
+                document.getElementById(
+    "cadastroNomeCompleto"
+).value = "";
+
+document.getElementById(
+    "cadastroEmail"
+).value = "";
+
+
+            }, 350);
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// VALIDAR USUÁRIO NO PROTHEUS
+// ------------------------------------------------------------
+
+if (btnValidarCadastro) {
+
+    btnValidarCadastro.addEventListener(
+        "click",
+        async function () {
+
+            const usuario =
+                document
+                    .getElementById(
+                        "cadastroUsuario"
+                    )
+                    .value
+                    .trim();
+
+            const senha =
+                document
+                    .getElementById(
+                        "cadastroSenha"
+                    )
+                    .value;
+
+
+            // ------------------------------------------------
+            // VALIDAÇÃO DOS CAMPOS
+            // ------------------------------------------------
+
+            if (!usuario || !senha) {
+
+                erroCadastro.innerText =
+                    "Informe o usuário e a senha do Protheus.";
+
+                return;
+            }
+
+
+            erroCadastro.style.color = "";
+
+            erroCadastro.innerText =
+                "Validando usuário no Protheus...";
+
+            btnValidarCadastro.disabled = true;
+
+
+            try {
+
+                const resposta = await fetch(
+                    "https://rastreio-amostras-backend-production.up.railway.app/cadastro/validar",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            username: usuario,
+                            password: senha
+                        })
+                    }
+                );
+
+
+                let data = {};
+
+                try {
+
+                    data =
+                        await resposta.json();
+
+                } catch {
+
+                    data = {};
+
+                }
+
+
+                // --------------------------------------------
+                // USUÁRIO JÁ CADASTRADO
+                // --------------------------------------------
+
+                if (resposta.status === 409) {
+
+                    erroCadastro.innerText =
+                        data.detail ||
+                        "Este usuário já possui cadastro.";
+
+                    btnValidarCadastro.disabled =
+                        false;
+
+                    return;
+                }
+
+
+                // --------------------------------------------
+                // USUÁRIO OU SENHA INVÁLIDOS
+                // --------------------------------------------
+
+                if (resposta.status === 401) {
+
+                    erroCadastro.innerText =
+                        "Usuário ou senha inválidos.";
+
+                    btnValidarCadastro.disabled =
+                        false;
+
+                    return;
+                }
+
+
+                // --------------------------------------------
+                // OUTRO ERRO
+                // --------------------------------------------
+
+                if (!resposta.ok) {
+
+                    erroCadastro.innerText =
+                        data.detail ||
+                        "Não foi possível validar o usuário.";
+
+                    btnValidarCadastro.disabled =
+                        false;
+
+                    return;
+                }
+
+
+                // --------------------------------------------
+                // SUCESSO
+                // --------------------------------------------
+
+                cadastroToken =
+                    data.cadastro_token;
+
+
+                if (!cadastroToken) {
+
+                    erroCadastro.innerText =
+                        "O servidor não retornou o token de cadastro.";
+
+                    btnValidarCadastro.disabled =
+                        false;
+
+                    return;
+                }
+
+
+                // ------------------------------------------------
+                // IMPORTANTE:
+                // APAGAR A SENHA DA MEMÓRIA DA TELA
+                // ------------------------------------------------
+
+                document.getElementById(
+                    "cadastroSenha"
+                ).value = "";
+
+
+                // --------------------------------------------
+                // IR PARA ETAPA 2
+                // --------------------------------------------
+
+                etapaCadastro1.style.display =
+                    "none";
+
+                etapaCadastro2.style.display =
+                    "block";
+
+
+                erroCadastro.style.color =
+                    "#80ff80";
+
+                erroCadastro.innerText =
+                    "Usuário validado. Informe seu código de vendedor.";
+
+            }
+
+            catch (erro) {
+
+                console.error(
+                    "Erro no cadastro:",
+                    erro
+                );
+
+                erroCadastro.innerText =
+                    "Servidor indisponível. Tente novamente.";
+
+            }
+
+
+            btnValidarCadastro.disabled =
+                false;
+
+        }
+    );
+
+}
+
+
+// ------------------------------------------------------------
+// FINALIZAR CADASTRO
+// ------------------------------------------------------------
+
+if (btnFinalizarCadastro) {
+
+    btnFinalizarCadastro.addEventListener(
+        "click",
+        async function () {
+            const nomeCompleto =
+    document
+        .getElementById(
+            "cadastroNomeCompleto"
+        )
+        .value
+        .trim();
+
+
+const email =
+    document
+        .getElementById(
+            "cadastroEmail"
+        )
+        .value
+        .trim()
+        .toLowerCase();
+
+
+const codigo =
+    document
+        .getElementById(
+            "cadastroCodigoVendedor"
+        )
+        .value
+        .trim()
+        .toUpperCase();
+
+
+                    
+            // --------------------------------------------
+            // VERIFICAR TOKEN
+            // --------------------------------------------
+
+            if (!cadastroToken) {
+
+                erroCadastro.innerText =
+                    "O cadastro expirou. Comece novamente.";
+
+                return;
+            }
+
+
+            // --------------------------------------------
+            // VERIFICAR CÓDIGO
+            // --------------------------------------------
+
+            if (!codigo) {
+
+                erroCadastro.innerText =
+                    "Informe seu código de vendedor.";
+
+                return;
+            }
+
+
+           // --------------------------------------------
+// CÓDIGO COM EXATAMENTE 6 CARACTERES
+// --------------------------------------------
+
+if (
+    !/^[A-Z0-9]{6}$/.test(codigo)
+) {
+
+    erroCadastro.innerText =
+        "Código inválido. Informe exatamente 6 caracteres.";
+
+    return;
+}
+
+
+            erroCadastro.style.color = "";
+
+            erroCadastro.innerText =
+                "Finalizando cadastro...";
+
+            btnFinalizarCadastro.disabled =
+                true;
+
+
+            try {
+                console.log("================================");
+console.log("FINALIZANDO CADASTRO");
+console.log("TOKEN:", cadastroToken);
+console.log("CÓDIGO:", codigo);
+console.log("================================");
+                const resposta = await fetch(
+                    "https://rastreio-amostras-backend-production.up.railway.app/cadastro/finalizar",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+
+    cadastro_token:
+        cadastroToken,
+
+    seller_code:
+        codigo,
+
+    nome_completo:
+        nomeCompleto,
+
+    email:
+        email
+
+})
+                    }
+                );
+
+
+                let data = {};
+
+                try {
+
+                    data =
+                        await resposta.json();
+
+                } catch {
+
+                    data = {};
+
+                }
+
+
+                // --------------------------------------------
+                // CÓDIGO JÁ CADASTRADO
+                // --------------------------------------------
+
+                if (resposta.status === 409) {
+
+                    erroCadastro.innerText =
+                        data.detail ||
+                        "Este código de vendedor já está cadastrado.";
+
+                    btnFinalizarCadastro.disabled =
+                        false;
+
+                    return;
+                }
+
+
+                // --------------------------------------------
+                // CADASTRO EXPIRADO
+                // --------------------------------------------
+
+                if (resposta.status === 400) {
+
+                    erroCadastro.innerText =
+                        data.detail ||
+                        "Cadastro inválido ou expirado.";
+
+                    btnFinalizarCadastro.disabled =
+                        false;
+
+                    return;
+                }
+
+
+                // --------------------------------------------
+                // OUTRO ERRO
+                // --------------------------------------------
+
+                if (!resposta.ok) {
+
+                    erroCadastro.innerText =
+                        data.detail ||
+                        "Não foi possível finalizar o cadastro.";
+
+                    btnFinalizarCadastro.disabled =
+                        false;
+
+                    return;
+                }
+
+
+                // --------------------------------------------
+                // SUCESSO
+                // --------------------------------------------
+
+                erroCadastro.style.color =
+                    "#80ff80";
+
+                erroCadastro.innerText =
+                    "Cadastro realizado com sucesso!";
+
+
+                cadastroToken =
+                    null;
+
+
+                // --------------------------------------------
+                // LIMPAR CAMPOS
+                // --------------------------------------------
+
+                document.getElementById(
+    "cadastroUsuario"
+).value = "";
+
+document.getElementById(
+    "cadastroSenha"
+).value = "";
+
+document.getElementById(
+    "cadastroNomeCompleto"
+).value = "";
+
+document.getElementById(
+    "cadastroEmail"
+).value = "";
+
+document.getElementById(
+    "cadastroCodigoVendedor"
+).value = "";
+
+
+                // --------------------------------------------
+                // VOLTAR PARA LOGIN
+                // --------------------------------------------
+
+                setTimeout(
+                    function () {
+
+                        areaCadastro.style.display =
+                            "none";
+
+                        formLogin.style.display =
+                            "flex";
+
+                        etapaCadastro1.style.display =
+                            "block";
+
+                        etapaCadastro2.style.display =
+                            "none";
+
+                        erroCadastro.innerText =
+                            "";
+
+                        erroLogin.style.color =
+                            "";
+
+                        erroLogin.innerText =
+                            "Cadastro realizado. Faça login.";
+
+                        document.getElementById(
+                            "usuarioLogin"
+                        ).value =
+                            data.seller_name || "";
+
+                    },
+                    800
+                );
+
+            }
+
+            catch (erro) {
+
+                console.error(
+                    "Erro ao finalizar cadastro:",
+                    erro
+                );
+
+                erroCadastro.innerText =
+                    "Servidor indisponível. Tente novamente.";
+
+            }
+
+
+            btnFinalizarCadastro.disabled =
+                false;
+
+        }
+    );
+
+}
 
     // ============================================================
     // ACESSO POR CÓDIGO DE VENDEDOR
@@ -626,35 +1542,27 @@ document.addEventListener("DOMContentLoaded", function () {
                             // IDENTIFICAÇÃO DO USUÁRIO
                             // ==================================================
 
-                            localStorage.setItem(
-                                "usuarioLogado",
-                                "VENDEDOR-" +
-                                normalizarCodigo(
-                                    codigoDigitado
-                                )
-                            );
-
-
                             // ==================================================
-                            // SALVAR CÓDIGO
-                            // ==================================================
+// ACESSO POR CÓDIGO
+// ==================================================
 
-                            localStorage.setItem(
-                                "codigoVendedor",
-                                normalizarCodigo(
-                                    codigoDigitado
-                                )
-                            );
+salvarSessaoLogin(
+    "VENDEDOR-" +
+    normalizarCodigo(
+        codigoDigitado
+    ),
 
+    normalizarCodigo(
+        codigoDigitado
+    ),
 
-                            // ==================================================
-                            // NÃO POSSUI ACESSO TOTAL
-                            // ==================================================
+    false,
 
-                            localStorage.setItem(
-                                "acessoTotal",
-                                "false"
-                            );
+    false,
+
+    manterConectado &&
+    manterConectado.checked
+);
 
 
                             // ==================================================

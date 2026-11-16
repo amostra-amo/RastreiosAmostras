@@ -4,9 +4,6 @@ const permissoes = {
         "v.santos": {
             telas: ["rastreio", "retorno"]
         },
-        "kcipriano": {
-            telas: ["rastreio", "analytics", "retornos", "relatorio"]
-        },
         "admin": {
             telas: ["*"]
         }
@@ -36,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const hojeFormatado = `${ano}-${mes}-${dia}`;
 
-    document.getElementById("dataFim").value = hojeFormatado;
+    // Datas em branco por padrão: mostra todos os envios até que o usuário filtre.
 
 });
 
@@ -46,6 +43,7 @@ Papa.parse(url, {
     complete: res => {
         dadosGlobais = res.data.slice(1);
         renderizarTabela(dadosGlobais);
+        iniciarConsultaDevolucoesCorreios();
     }
 });
 
@@ -150,6 +148,8 @@ totalValorGeral += valorUnitario;
             currency: "BRL"
         });
 
+    document.getElementById('totalClientesEnvios').textContent = new Set(Object.values(grupos).map(g => String(g[0][18] || g[0][19] || '').trim()).filter(Boolean)).size;
+    desenharGraficosEnvios(dadosGlobais);
     // 🔵 Ordena automaticamente ao renderizar
     const thValor = document.querySelector(".th-sort");
     ordenarPorValor(thValor);
@@ -658,6 +658,40 @@ function converterDataISOparaLocal(dataISO) {
     return new Date(ano, mes - 1, dia);
 }
 
+let modoResumoCentroCusto = 'envios';
+function abrirResumoCentroCusto(modo = 'envios') {
+    modoResumoCentroCusto = modo === 'devolucoes' ? 'devolucoes' : 'envios';
+    document.getElementById('submenuCentroCusto')?.classList.toggle('modo-resumo-devolucoes', modoResumoCentroCusto === 'devolucoes');
+    const titulo = document.getElementById('tituloResumoCentroCusto');
+    const descricao = document.getElementById('descricaoResumoCentroCusto');
+    if (titulo) titulo.textContent = modoResumoCentroCusto === 'devolucoes' ? 'Centro de custo · Devoluções' : 'Centro de custo · Envios';
+    if (descricao) descricao.textContent = modoResumoCentroCusto === 'devolucoes'
+        ? 'Somente devoluções identificadas pelos Correios, respeitando o mês e a pesquisa selecionados.'
+        : 'Envios agrupados por rastreio, respeitando os filtros de data e valor.';
+    gerarResumoCentroCusto();
+    document.getElementById('submenuCentroCusto').classList.add('ativo');
+}
+function obterLinhasResumoCentroCusto() {
+    if (modoResumoCentroCusto === 'devolucoes') {
+        // A mesma lista usada no card de valor e na tabela de devoluções.
+        return devolucoesVisiveis.map(d => ({ centro: String(d.grupo?.[0]?.[10] || 'Não informado').trim() || 'Não informado', valor: d.valor }));
+    }
+    const grupos = new Map();
+    obterBaseAtualFiltrada().forEach(l => {
+        const rastreio = String(l[1] || '').trim();
+        if (rastreio && !grupos.has(rastreio)) grupos.set(rastreio, l);
+    });
+    return [...grupos.values()].map(l => ({ centro: String(l[10] || 'Não informado').trim() || 'Não informado', valor: converterValorBR(l[COL_ENVIO]) }));
+}
+function calcularResumoCentroCusto() {
+    const resumo = new Map(); let totalGeral = 0;
+    obterLinhasResumoCentroCusto().forEach(({centro, valor}) => {
+        const v = Number(valor) || 0;
+        resumo.set(centro, (resumo.get(centro) || 0) + v);
+        totalGeral += v;
+    });
+    return { resumo: [...resumo.entries()].sort((a,b) => b[1]-a[1]), totalGeral };
+}
 function toggleResumoCentroCusto() {
 
     const submenu = document.getElementById("submenuCentroCusto");
@@ -703,84 +737,25 @@ function obterBaseAtualFiltrada() {
 }
 
 function gerarResumoCentroCusto() {
-
-    const tbody = document.getElementById("tabelaCentroCusto");
-    tbody.innerHTML = "";
-
-    const resumo = {};
-    let totalGeral = 0;
-
-    const baseAtual = obterBaseAtualFiltrada();
-
-    // 🔥 AGRUPAR POR RASTREIO PRIMEIRO
-    const grupos = {};
-
-    baseAtual.forEach(l => {
-        const rastreio = l[1];
-        if (!rastreio) return;
-
-        if (!grupos[rastreio]) {
-            grupos[rastreio] = l; // guarda só a primeira linha do rastreio
-        }
-    });
-
-    // 🔥 AGORA SOMA UMA VEZ POR RASTREIO
-    Object.values(grupos).forEach(l => {
-
-        const centroCusto = l[10] || "Não informado";
-        const valor = converterValorBR(l[COL_ENVIO]);
-
-        if (!resumo[centroCusto]) {
-            resumo[centroCusto] = 0;
-        }
-
-        resumo[centroCusto] += valor;
-        totalGeral += valor;
-    });
-
-    // 🔥 MONTA TABELA
-    Object.entries(resumo)
-    .sort((a, b) => b[1] - a[1]) // 🔥 ORDENA PELO VALOR (crescente)
-    .forEach(([centro, total]) => {
-
-        const tr = document.createElement("tr");
-
-        const percentual = totalGeral > 0
-    ? ((total / totalGeral) * 100).toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    : "0,00";
-
-        tr.innerHTML = `
-            <td>${centro}</td>
-            <td>${total.toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL"
-            })}</td>
-            <td class="col-percentual">${percentual}%</td>
-        `;
-
+    const tbody = document.getElementById('tabelaCentroCusto');
+    if (!tbody) return;
+    tbody.replaceChildren();
+    const { resumo, totalGeral } = calcularResumoCentroCusto();
+    const moeda = valor => valor.toLocaleString('pt-BR', {style:'currency',currency:'BRL'});
+    resumo.forEach(([centro, valor]) => {
+        const tr = document.createElement('tr');
+        const percentual = totalGeral ? (valor / totalGeral * 100).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2}) : '0,00';
+        [centro, moeda(valor), percentual + '%'].forEach(texto => {
+            const td = document.createElement('td'); td.textContent = texto; tr.appendChild(td);
+        });
         tbody.appendChild(tr);
     });
-
-    // 🔥 TOTAL GERAL
-    const trTotal = document.createElement("tr");
-    trTotal.style.fontWeight = "bold";
-    trTotal.style.background = "#f2f2f2";
-
-    trTotal.innerHTML = `
-    <td>TOTAL GERAL</td>
-    <td>${totalGeral.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL"
-    })}</td>
-    <td>100,00%</td>
-`;
-
-    tbody.appendChild(trTotal);
+    const tr = document.createElement('tr'); tr.className = 'centro-total';
+    ['TOTAL GERAL', moeda(totalGeral), resumo.length ? '100,00%' : '0,00%'].forEach(texto => {
+        const td = document.createElement('td'); td.textContent = texto; tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
 }
-
 function fecharModalCentro() {
     document.getElementById("modalCentroCusto").classList.remove("ativo");
 }
@@ -801,55 +776,12 @@ async function gerarPDFCentroCusto() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("p", "mm", "a4");
 
-    const baseAtual = obterBaseAtualFiltrada();
-
-    const resumo = {};
-    let totalGeral = 0;
-
-    // 🔥 AGRUPA POR RASTREIO PRIMEIRO (igual à tela)
-    const grupos = {};
-
-    baseAtual.forEach(l => {
-        const rastreio = l[1];
-        if (!rastreio) return;
-
-        if (!grupos[rastreio]) {
-            grupos[rastreio] = l; // guarda só a primeira linha
-        }
-    });
-
-    // 🔥 SOMA UMA VEZ POR RASTREIO
-    Object.values(grupos).forEach(l => {
-
-        const centro = l[10] || "Não informado";
-        const valor = converterValorBR(l[COL_ENVIO]);
-
-        if (!resumo[centro]) resumo[centro] = 0;
-
-        resumo[centro] += valor;
-        totalGeral += valor;
-    });
-
-    // 🔥 ORDENA IGUAL À TELA (CRESCENTE)
-    const corpoTabela = Object.entries(resumo)
-        .sort((a, b) => b[1] - a[1])
-        .map(([centro, total]) => {
-
-    const percentual = totalGeral > 0
-    ? ((total / totalGeral) * 100).toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      })
-    : "0,00";
-    return [
+    const { resumo, totalGeral } = calcularResumoCentroCusto();
+    const corpoTabela = resumo.map(([centro, total]) => [
         centro,
-        total.toLocaleString("pt-BR", {
-            style: "currency",
-            currency: "BRL"
-        }),
-        percentual + "%"
-    ];
-});
+        total.toLocaleString('pt-BR', {style:'currency',currency:'BRL'}),
+        (totalGeral ? total / totalGeral * 100 : 0).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2}) + '%'
+    ]);
 
     await carregarLogo(); // garante que a logo carregou
 
@@ -933,14 +865,12 @@ doc.rect(0, 25, 210, 5, "F");
 }
 
 function filtrarPorRastreio() {
-    const input = document.getElementById("inputRastreio");
-    input.value = input.value.toUpperCase(); // força maiúsculas
-    const valor = input.value.trim();
-    const linhas = document.querySelectorAll("#listaAnalises tr");
-
-    linhas.forEach(linha => {
-        const rastreio = linha.querySelector("td:nth-child(2)").textContent.toUpperCase();
-        linha.style.display = rastreio.includes(valor) ? "" : "none";
+    const input = document.getElementById('inputRastreio');
+    if (!input) return;
+    const normalizar = valor => String(valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR');
+    const busca = normalizar(input.value.trim());
+    document.querySelectorAll('#listaAnalises tr').forEach(linha => {
+        linha.style.display = normalizar(linha.textContent).includes(busca) ? '' : 'none';
     });
 }
 
@@ -1038,3 +968,263 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+// ================= PAINEL DE DEVOLUÇÕES =================
+// Mesma origem de dados utilizada pela tabela de envios. Situação/status:
+// coluna 25 = situação, 26 = status, 27 = data do status/postagem.
+let modoAnalytics = 'envios';
+let devolucoesVisiveis = [];
+const moedaDevolucao = valor => Number(valor || 0).toLocaleString('pt-BR', {style:'currency',currency:'BRL'});
+const textoSeguroDevolucao = v => String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+// A mesma rota de resumo e a mesma prioridade de retorno usadas no Rastreio.
+const API_DEVOLUCOES_CORREIOS = 'https://rastreio-amostras-backend-production.up.railway.app/rastreio-correios';
+const CACHE_DEVOLUCOES_CORREIOS = 'rastreiosCorreiosStatus';
+const statusDevolucoesCorreios = new Map();
+let consultaDevolucoesEmAndamento = false;
+let consultaDevolucoesConcluida = false;
+function normalizarTextoCorreios(v) { return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase(); }
+function normalizarCodigoCorreios(v) { return String(v || '').trim().toUpperCase().replace(/\s+/g,''); }
+function classificarDevolucaoCorreios(status) {
+    const texto = normalizarTextoCorreios(`${status?.codigoEvento || status?.codigo || ''} ${status?.status || ''} ${status?.descricao || ''} ${status?.situacao || ''}`);
+    if (/ENTREGUE AO REMETENTE|DEVOLVID[OA] AO REMETENTE|DEVOLUCAO AO REMETENTE|RETORNAD[OA] AO REMETENTE|RETORNOU AO REMETENTE|DEVOLVID[OA]|DEVOLUCAO|RETORN/.test(texto)) return 'RETORN';
+    return normalizarTextoCorreios(status?.situacao) === 'RETORN' ? 'RETORN' : 'OUTRO';
+}
+function ehDevolucao(l) {
+    const codigo = normalizarCodigoCorreios(l[1]);
+    return codigo && classificarDevolucaoCorreios(statusDevolucoesCorreios.get(codigo)) === 'RETORN';
+}
+function atualizarAvisoDevolucoes(texto) {
+    const el = document.getElementById('avisoDevolucao');
+    if (el) el.textContent = texto;
+    const topo = document.getElementById('statusCorreiosTopo');
+    if (topo) {
+        topo.classList.toggle('status-finalizado', /conclu[ií]da|conclu[ií]do/i.test(texto));
+        topo.classList.toggle('status-falha', /erro|falha|nenhum c[oó]digo/i.test(texto));
+    }
+}
+async function iniciarConsultaDevolucoesCorreios() {
+    if (consultaDevolucoesEmAndamento) return;
+    consultaDevolucoesEmAndamento = true;
+    const codigos = [...new Set(dadosGlobais.map(l => normalizarCodigoCorreios(l[1])).filter(c => /^[A-Z]{2}\d{9}[A-Z]{2}$/.test(c)))];
+    if (!codigos.length) { consultaDevolucoesEmAndamento = false; consultaDevolucoesConcluida = true; atualizarAvisoDevolucoes('Nenhum código de rastreio válido encontrado na planilha.'); renderizarDevolucoes(); return; }
+    let cache = {};
+    try { cache = JSON.parse(localStorage.getItem(CACHE_DEVOLUCOES_CORREIOS) || '{}') || {}; } catch (_) {}
+    for (const codigo of codigos) if (cache[codigo]) statusDevolucoesCorreios.set(codigo, cache[codigo]);
+    renderizarDevolucoes();
+    atualizarAvisoDevolucoes(`Consultando Correios: 0/${codigos.length} rastreios. Resultados parciais.`);
+    let indice = 0, concluidos = 0, falhas = 0;
+    const trabalhadores = Array.from({length:Math.min(8,codigos.length)}, async () => {
+        while (indice < codigos.length) {
+            const codigo = codigos[indice++];
+            try {
+                const controlador = new AbortController();
+                const temporizador = setTimeout(() => controlador.abort(), 20000);
+                let resposta;
+                try { resposta = await fetch(`${API_DEVOLUCOES_CORREIOS}/${encodeURIComponent(codigo)}/resumo`, {cache:'no-store',signal:controlador.signal}); }
+                finally { clearTimeout(temporizador); }
+                if (!resposta.ok) throw Error(`HTTP ${resposta.status}`);
+                const dados = await resposta.json();
+                if (!dados?.sucesso || !dados?.resumo) throw Error('Resumo não disponível');
+                const status = {...dados.resumo, situacao:classificarDevolucaoCorreios(dados.resumo)};
+                statusDevolucoesCorreios.set(codigo,status);
+                cache[codigo] = status;
+            } catch (erro) { falhas++; console.warn('Correios',codigo,erro); }
+            concluidos++;
+            if (concluidos % 5 === 0 || concluidos === codigos.length) {
+                atualizarAvisoDevolucoes(`Correios: ${concluidos}/${codigos.length} consultados${falhas ? ` · ${falhas} falhas` : ''}`);
+                renderizarDevolucoes();
+            }
+        }
+    });
+    await Promise.all(trabalhadores);
+    try { localStorage.setItem(CACHE_DEVOLUCOES_CORREIOS,JSON.stringify(cache)); } catch (_) {}
+    consultaDevolucoesConcluida = true;
+    consultaDevolucoesEmAndamento = false;
+    atualizarAvisoDevolucoes(`Consulta concluída: ${codigos.length - falhas}/${codigos.length} rastreios verificados nos Correios${falhas ? ` · ${falhas} falhas` : ''}`);
+    renderizarDevolucoes();
+}
+function formatarDataDevolucao(valor) {
+    if (!valor) return 'Não informada';
+    const texto = String(valor);
+    const m = texto.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+    if (m) return `${m[3]}/${m[2]}/${m[1]} ${m[4]}:${m[5]}`;
+    return texto;
+}
+function alternarAnalytics(modo) {
+    modoAnalytics = modo;
+    document.getElementById('painelEnviosAnalytics').hidden = modo !== 'envios';
+    document.getElementById('painelDevolucoesAnalytics').hidden = modo !== 'devolucoes';
+    document.getElementById('abaEnvios').classList.toggle('selecionada', modo === 'envios');
+    document.getElementById('abaDevolucoes').classList.toggle('selecionada', modo === 'devolucoes');
+    document.body.classList.toggle('modo-devolucoes', modo === 'devolucoes');
+    document.querySelector('.titulo-sistema').textContent = modo === 'devolucoes' ? 'Análise | Devoluções de Amostras' : 'Análise | Envio de Amostras';
+    if (modo === 'envios') desenharGraficosEnvios(dadosGlobais);
+    if (modo === 'devolucoes') { renderizarDevolucoes(); if (!consultaDevolucoesEmAndamento && !consultaDevolucoesConcluida && dadosGlobais.length) iniciarConsultaDevolucoesCorreios(); }
+}
+let mesDevolucaoSelecionado = null;
+const mesesDevolucaoPT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function chaveMesDevolucao(valor) {const m=String(valor||'').match(/^(\d{2})\/(\d{2})\/(\d{4})/);return m ? `${m[3]}-${m[2]}` : '';}
+function rotuloMesDevolucao(chave) {if(!chave)return '—';const [ano,mes]=chave.split('-');return `${mesesDevolucaoPT[Number(mes)-1]||'—'}/${ano.slice(-2)}`;}
+function limparFiltroMesDevolucao(){mesDevolucaoSelecionado=null;renderizarDevolucoes();}
+function selecionarMesDevolucao(chave){mesDevolucaoSelecionado=mesDevolucaoSelecionado===chave?null:chave;renderizarDevolucoes();}
+function obterDevolucoes() {
+    const grupos = new Map();
+    dadosGlobais.filter(ehDevolucao).forEach(l => {
+        const chave = String(l[1] || '').trim() || `NF:${l[0] || ''}|PED:${l[14] || ''}`;
+        if (!grupos.has(chave)) grupos.set(chave, []);
+        grupos.get(chave).push(l);
+    });
+    return Array.from(grupos.values()).map(grupo => {
+        const l = grupo[0];
+        const correios = statusDevolucoesCorreios.get(normalizarCodigoCorreios(l[1])) || {};
+        const dataStatus = formatarDataDevolucao(correios.data);
+        return {grupo, rastreio:l[1] || '', pedido:l[14] || '', data:dataStatus,
+            valor:converterValorBR(l[COL_ENVIO]), tipo: l[2] || 'Não informado',
+            cliente:l[19] || 'Não informado', vendedor:l[23] || 'Não informado', codigoVendedor:l[22] || '', marca:l[24] || 'Não informada',
+            nota:l[0] || '', situacao:correios.situacao || '', status:correios.descricao || correios.status || '',
+            cidade:l[11] || '', uf:l[12] || '', representante:l[21] || '',
+            dataEnvio:l[5] || ''};
+    });
+}
+function renderizarDevolucoes() {
+    const tbody = document.getElementById('listaDevolucoes'); if (!tbody) return;
+    const busca = (document.getElementById('buscaDevolucoes')?.value || '').toLocaleLowerCase('pt-BR');
+    const todos = obterDevolucoes().filter(d => [d.cliente,d.vendedor,d.codigoVendedor,d.marca,d.pedido,d.nota,d.rastreio,d.tipo].join(' ').toLocaleLowerCase('pt-BR').includes(busca));
+    devolucoesVisiveis = todos.filter(d => !mesDevolucaoSelecionado || chaveMesDevolucao(d.data) === mesDevolucaoSelecionado);
+    tbody.replaceChildren();let total = 0;
+    devolucoesVisiveis.forEach((d,i) => {
+        total += d.valor;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td><span class="dash-month-pill">${textoSeguroDevolucao(rotuloMesDevolucao(chaveMesDevolucao(d.data)))}</span></td><td>${textoSeguroDevolucao(d.marca)}</td><td>${textoSeguroDevolucao(d.pedido)}</td><td>${textoSeguroDevolucao(d.nota)}</td><td>${textoSeguroDevolucao(d.cliente)}</td><td>${textoSeguroDevolucao([d.codigoVendedor,d.vendedor].filter(Boolean).join(' - '))}</td><td class="dash-cost">${moedaDevolucao(d.valor)}</td><td><button type="button" class="lupa-devolucao" aria-label="Ver detalhes da devolução" data-indice="${i}">🔎</button></td>`;
+        tr.querySelector('button').addEventListener('click', () => abrirDetalhesDevolucao(i));tbody.appendChild(tr);
+    });
+    if (!devolucoesVisiveis.length) {const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=8;td.textContent=consultaDevolucoesConcluida ? 'Nenhuma devolução encontrada para os filtros selecionados.' : 'Consultando os Correios. Aguarde a atualização dos resultados...';tr.appendChild(td);tbody.appendChild(tr);}
+    document.getElementById('totalDevolucoes').textContent = devolucoesVisiveis.length;
+    document.getElementById('valorDevolucoes').textContent = moedaDevolucao(total);
+    document.getElementById('clientesDevolucoes').textContent = new Set(devolucoesVisiveis.map(d=>d.cliente).filter(Boolean)).size.toLocaleString('pt-BR');
+    const limpar=document.getElementById('limparFiltroMes');if(limpar)limpar.hidden=!mesDevolucaoSelecionado;
+    desenharGraficosDevolucoes(todos);
+}
+function abrirDetalhesDevolucao(indice) {
+    const d = devolucoesVisiveis[indice]; if (!d) return;
+    const campos = [['Mês',rotuloMesDevolucao(chaveMesDevolucao(d.data))],['Marca',d.marca],['Pedido',d.pedido],['Nota fiscal',d.nota],['Cliente',d.cliente],['Vendedora',[d.codigoVendedor,d.vendedor].filter(Boolean).join(' - ')],['Custo',moedaDevolucao(d.valor)],['Rastreio',d.rastreio],['Data e horário da devolutiva',d.data || 'Não informados pelos Correios'],['Representante',d.representante],['Cidade - UF',[d.cidade,d.uf].filter(Boolean).join(' - ')],['Tipo de envio',d.tipo],['Data do envio',d.dataEnvio],['Situação',d.situacao],['Status dos Correios',d.status]];
+    document.getElementById('camposDevolucao').innerHTML = campos.map(([titulo,valor]) => `<div class="campo"><span class="label">${textoSeguroDevolucao(titulo)}</span><span>${textoSeguroDevolucao(valor || '—')}</span></div>`).join('');
+    const itens = document.getElementById('itensDevolucao');itens.replaceChildren();
+    d.grupo.forEach(l => {const li=document.createElement('li');li.textContent=`${l[16] || 1} × ${l[17] || ''} — ${l[15] || ''}`;itens.appendChild(li);});
+    document.getElementById('modalDevolucao').classList.add('ativo');
+}
+function fecharDetalhesDevolucao() { document.getElementById('modalDevolucao').classList.remove('ativo'); }
+document.getElementById('modalDevolucao')?.addEventListener('click', e => {if(e.target.id === 'modalDevolucao') fecharDetalhesDevolucao();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape') fecharDetalhesDevolucao();});
+
+// Gráficos sem dependências externas; o gráfico mensal também filtra a tabela.
+function desenharGraficosDevolucoes(registros) {
+  const mensal = new Map();
+  registros.forEach(d => {const chave=chaveMesDevolucao(d.data);if(!chave)return;const item=mensal.get(chave)||{qtd:0,valor:0};item.qtd++;item.valor+=Number(d.valor)||0;mensal.set(chave,item);});
+  const meses=[...mensal.entries()].sort((a,b)=>a[0].localeCompare(b[0])).slice(-6);
+  const areaMes=document.getElementById('graficoDevolucoes');
+  if(areaMes){areaMes.replaceChildren();areaMes.classList.toggle('dash-chart-empty',!meses.length);
+    if(!meses.length)areaMes.textContent='Os meses aparecerão quando os Correios informarem as datas das devoluções.';
+    else {const max=Math.max(1,...meses.map(x=>x[1].qtd));meses.forEach(([chave,item])=>{
+      const col=document.createElement('button');col.type='button';col.className='dash-bar-col dash-bar-button'+(mesDevolucaoSelecionado===chave?' selecionado':'');col.title=`Filtrar ${rotuloMesDevolucao(chave)}: ${item.qtd} devoluções`;col.setAttribute('aria-pressed',String(mesDevolucaoSelecionado===chave));col.onclick=()=>selecionarMesDevolucao(chave);
+      const valor=document.createElement('strong');valor.textContent=item.qtd;const barra=document.createElement('div');barra.className='dash-bar';barra.style.height=`${Math.max(8,Math.round(item.qtd/max*145))}px`;const label=document.createElement('span');label.textContent=rotuloMesDevolucao(chave);col.append(valor,barra,label);areaMes.appendChild(col);
+    });}
+  }
+  const areaValor=document.getElementById('graficoValorDevolucoes');if(!areaValor)return;
+  areaValor.replaceChildren();areaValor.classList.toggle('dash-chart-empty',!meses.length);
+  if(!meses.length){areaValor.textContent='Os valores mensais aparecerão conforme as devoluções forem identificadas.';return;}
+  const valores=meses.map(x=>x[1].valor);const max=Math.max(1,...valores);const w=600,h=190,left=22,right=18,top=26,bottom=40;const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.setAttribute('role','img');svg.setAttribute('aria-label','Evolução mensal dos valores dos envios devolvidos');
+  const pts=meses.map(([chave,item],i)=>({x:left+(meses.length===1?.5:i/(meses.length-1))*(w-left-right),y:top+(1-item.valor/max)*(h-top-bottom),chave,valor:item.valor}));
+  for(let i=0;i<3;i++){const y=top+i*(h-top-bottom)/2;const line=document.createElementNS(ns,'line');for(const [k,v] of Object.entries({x1:left,y1:y,x2:w-right,y2:y,stroke:'#e9edf4','stroke-dasharray':'4 5'}))line.setAttribute(k,v);svg.appendChild(line);}
+  const poly=document.createElementNS(ns,'polyline');poly.setAttribute('points',pts.map(p=>`${p.x},${p.y}`).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke','#b42332');poly.setAttribute('stroke-width','3.5');poly.setAttribute('stroke-linejoin','round');poly.setAttribute('stroke-linecap','round');svg.appendChild(poly);
+  pts.forEach(p=>{const circle=document.createElementNS(ns,'circle');for(const [k,v] of Object.entries({cx:p.x,cy:p.y,r:5,fill:'#fff',stroke:'#b42332','stroke-width':3}))circle.setAttribute(k,v);const title=document.createElementNS(ns,'title');title.textContent=`${rotuloMesDevolucao(p.chave)}: ${moedaDevolucao(p.valor)}`;circle.appendChild(title);svg.appendChild(circle);const label=document.createElementNS(ns,'text');label.setAttribute('x',p.x);label.setAttribute('y',h-12);label.setAttribute('text-anchor','middle');label.setAttribute('fill','#7b8797');label.setAttribute('font-size','13');label.textContent=rotuloMesDevolucao(p.chave);svg.appendChild(label);});areaValor.appendChild(svg);
+}
+
+// Painel executivo de Envios — mantém os filtros originais e adiciona interação mensal.
+let mesEnviosSelecionado = null;
+function obterDataEnvio(linha) {
+  const d = converterDataBR(linha[5]);
+  return d instanceof Date && !isNaN(d.getTime()) ? d : null;
+}
+function chaveMesEnvio(linha) {const d=obterDataEnvio(linha);return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : '';}
+function dadosEnviosFiltrados() {
+  const inicio=document.getElementById('dataInicio')?.value;
+  const fim=document.getElementById('dataFim')?.value;
+  const acima=document.getElementById('filtro100')?.checked;
+  return dadosGlobais.filter(l=>{
+    const d=obterDataEnvio(l);
+    if(inicio && (!d || d < converterDataISOparaLocal(inicio))) return false;
+    if(fim) {const limite=converterDataISOparaLocal(fim);limite.setHours(23,59,59,999);if(!d||d>limite)return false;}
+    if(mesEnviosSelecionado && chaveMesEnvio(l)!==mesEnviosSelecionado)return false;
+    if(acima && converterValorBR(l[COL_ENVIO])<=100)return false;
+    return true;
+  });
+}
+function atualizarPainelEnvios(){renderizarTabela(dadosEnviosFiltrados());filtrarPorRastreio();}
+function selecionarMesEnvios(mes){mesEnviosSelecionado=mesEnviosSelecionado===mes?null:mes;atualizarPainelEnvios();}
+function limparMesEnvios(){mesEnviosSelecionado=null;atualizarPainelEnvios();}
+function limparDatasEnvios(){document.getElementById('dataInicio').value='';document.getElementById('dataFim').value='';mesEnviosSelecionado=null;atualizarPainelEnvios();}
+// Sobrescreve apenas a aplicação de filtros, preservando os demais recursos da tabela.
+filtrarPorData = function(){atualizarPainelEnvios();};
+aplicarFiltroValor = function(){atualizarPainelEnvios();};
+function desenharGraficosEnvios(registros) {
+  const mensal=new Map(),grupos=new Map();
+  registros.forEach(l=>{const codigo=String(l[1]||'').trim();if(codigo&&!grupos.has(codigo))grupos.set(codigo,l);});
+  grupos.forEach(l=>{const chave=chaveMesEnvio(l);if(!chave)return;const item=mensal.get(chave)||{qtd:0,valor:0};item.qtd++;item.valor+=converterValorBR(l[COL_ENVIO]);mensal.set(chave,item);});
+  const meses=[...mensal.entries()].sort((a,b)=>a[0].localeCompare(b[0])).slice(-8);
+  const barras=document.getElementById('graficoEnvios');const linha=document.getElementById('graficoValorEnvios');if(!barras||!linha)return;
+  barras.replaceChildren();linha.replaceChildren();
+  document.getElementById('limparMesEnvios').hidden=!mesEnviosSelecionado;
+  if(!meses.length){barras.textContent='Sem envios com data válida.';linha.textContent='Sem valores mensais disponíveis.';return;}
+  const maxQtd=Math.max(1,...meses.map(x=>x[1].qtd));
+  meses.forEach(([chave,item])=>{const btn=document.createElement('button');btn.type='button';btn.className='dash-bar-col dash-bar-button'+(mesEnviosSelecionado===chave?' selecionado':'');btn.title=`Filtrar ${rotuloMesDevolucao(chave)}: ${item.qtd} envios`;btn.setAttribute('aria-pressed',String(mesEnviosSelecionado===chave));btn.onclick=()=>selecionarMesEnvios(chave);const num=document.createElement('strong');num.textContent=item.qtd;const barra=document.createElement('div');barra.className='dash-bar';barra.style.height=`${Math.max(8,Math.round(item.qtd/maxQtd*145))}px`;const rotulo=document.createElement('span');rotulo.textContent=rotuloMesDevolucao(chave);btn.append(num,barra,rotulo);barras.appendChild(btn);});
+  const w=600,h=190,left=25,right=20,top=24,bottom=40,ns='http://www.w3.org/2000/svg',maxValor=Math.max(1,...meses.map(x=>x[1].valor));
+  const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.setAttribute('role','img');svg.setAttribute('aria-label','Valor dos envios por mês');
+  for(let i=0;i<3;i++){const y=top+i*(h-top-bottom)/2;const g=document.createElementNS(ns,'line');for(const [k,v] of Object.entries({x1:left,y1:y,x2:w-right,y2:y,stroke:'#e9edf4','stroke-dasharray':'4 5'}))g.setAttribute(k,v);svg.appendChild(g);}
+  const pts=meses.map(([chave,item],i)=>({x:left+(meses.length===1?.5:i/(meses.length-1))*(w-left-right),y:top+(1-item.valor/maxValor)*(h-top-bottom),chave,valor:item.valor}));
+  const poly=document.createElementNS(ns,'polyline');poly.setAttribute('points',pts.map(p=>`${p.x},${p.y}`).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke','#2563a6');poly.setAttribute('stroke-width','3.5');svg.appendChild(poly);
+  pts.forEach(p=>{const dot=document.createElementNS(ns,'circle');for(const [k,v] of Object.entries({cx:p.x,cy:p.y,r:5,fill:'#fff',stroke:'#2563a6','stroke-width':3}))dot.setAttribute(k,v);const title=document.createElementNS(ns,'title');title.textContent=`${rotuloMesDevolucao(p.chave)}: ${moedaDevolucao(p.valor)}`;dot.appendChild(title);svg.appendChild(dot);const label=document.createElementNS(ns,'text');for(const [k,v] of Object.entries({x:p.x,y:h-12,'text-anchor':'middle',fill:'#7b8797','font-size':'13'}))label.setAttribute(k,v);label.textContent=rotuloMesDevolucao(p.chave);svg.appendChild(label);});linha.appendChild(svg);
+}
+
+// V5: gráfico alternável e centros de custo dinâmicos (sem alterar a consulta aos Correios).
+const visualAnalytics={envios:{grafico:'envios',centro:'custos'},devolucoes:{grafico:'envios',centro:'custos'}};
+function alterarGraficoAnalytics(modo, tipo){
+ visualAnalytics[modo].grafico=tipo;
+ visualAnalytics[modo].centro=tipo;
+ atualizarVisuaisAnalytics(modo);
+}
+
+function dadosMensaisAnalytics(modo){
+ const base=modo==='envios'?dadosEnviosFiltrados():devolucoesVisiveis;
+ const grupos=new Map();
+ if(modo==='envios')base.forEach(l=>{const chave=String(l[1]||'').trim()||`NF:${l[0]}|PED:${l[14]}`;if(!grupos.has(chave))grupos.set(chave,l);});
+ const linhas=modo==='envios'?[...grupos.values()].map(l=>({mes:chaveMesEnvio(l),valor:converterValorBR(l[COL_ENVIO]),centro:String(l[10]||'Não informado').trim(),pedido:String(l[14]||'')})):base.map(d=>({mes:chaveMesDevolucao(d.data),valor:Number(d.valor)||0,centro:String(d.grupo?.[0]?.[10]||'Não informado').trim(),pedido:String(d.pedido||'')}));
+ return linhas;
+}
+function atualizarVisuaisAnalytics(modo){
+ const cap=modo==='envios'?'Envios':'Devolucoes',rotulo=modo==='envios'?'Envios':'Devoluções',state=visualAnalytics[modo],linhas=dadosMensaisAnalytics(modo);
+ const chart=document.getElementById('graficoPrincipal'+cap),cc=document.getElementById('centroCustoPainel'+cap);if(!chart||!cc)return;
+ const mensal=new Map();linhas.forEach(l=>{if(!l.mes)return;const v=mensal.get(l.mes)||{qtd:0,valor:0};v.qtd++;v.valor+=l.valor;mensal.set(l.mes,v);});
+ const meses=[...mensal.entries()].sort((a,b)=>a[0].localeCompare(b[0])).slice(-8);
+ const custo=state.grafico==='custos',selected=modo==='envios'?mesEnviosSelecionado:mesDevolucaoSelecionado;
+ document.getElementById('tituloGrafico'+cap).textContent=custo?'Custos R$ por mês':rotulo+' por mês';
+ [['botaoQtd'+cap,!custo],['botaoCusto'+cap,custo]].forEach(([id,active])=>document.getElementById(id)?.classList.toggle('ativo',active));
+ chart.replaceChildren();chart.className=custo?'dash-chart-line dash-line-v5':'dash-chart-bars';
+ if(!meses.length){chart.textContent='Sem dados mensais disponíveis para os filtros selecionados.';}else if(!custo){
+  const max=Math.max(1,...meses.map(x=>x[1].qtd));meses.forEach(([mes,item])=>{const b=document.createElement('button');b.type='button';b.className='dash-bar-col dash-bar-button'+(selected===mes?' selecionado':'');b.setAttribute('aria-pressed',String(selected===mes));b.title='Filtrar '+rotuloMesDevolucao(mes);b.onclick=()=>modo==='envios'?selecionarMesEnvios(mes):selecionarMesDevolucao(mes);const num=document.createElement('strong');num.textContent=item.qtd;const bar=document.createElement('div');bar.className='dash-bar';bar.style.height=Math.max(8,Math.round(item.qtd/max*145))+'px';const label=document.createElement('span');label.textContent=rotuloMesDevolucao(mes);b.append(num,bar,label);chart.appendChild(b);});
+ }else{
+  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg'),w=680,h=235,pad=65,max=Math.max(1,...meses.map(x=>x[1].valor));svg.setAttribute('viewBox',`0 0 ${w} ${h}`);svg.setAttribute('role','img');svg.setAttribute('aria-label','Evolução mensal de custos em reais');const points=meses.map(([m,v],i)=>({x:pad+(meses.length===1?.5:i/(meses.length-1))*(w-pad*2),y:36+(1-v.valor/max)*130,m,valor:v.valor}));
+  const poly=document.createElementNS(ns,'polyline');poly.setAttribute('points',points.map(p=>p.x+','+p.y).join(' '));poly.setAttribute('fill','none');poly.setAttribute('stroke',modo==='envios'?'#2563a6':'#b42332');poly.setAttribute('stroke-width','3');svg.appendChild(poly);
+  points.forEach(p=>{const circle=document.createElementNS(ns,'circle');circle.setAttribute('cx',p.x);circle.setAttribute('cy',p.y);circle.setAttribute('r','5');circle.setAttribute('fill',modo==='envios'?'#2563a6':'#b42332');svg.appendChild(circle);const valor=document.createElementNS(ns,'text');valor.setAttribute('x',p.x);valor.setAttribute('y',Math.max(15,p.y-12));valor.setAttribute('text-anchor','middle');valor.setAttribute('font-size','11');valor.setAttribute('fill','#344054');valor.textContent=moedaDevolucao(p.valor);svg.appendChild(valor);const mes=document.createElementNS(ns,'text');mes.setAttribute('x',p.x);mes.setAttribute('y','218');mes.setAttribute('text-anchor','middle');mes.setAttribute('font-size','12');mes.setAttribute('fill','#667085');mes.textContent=rotuloMesDevolucao(p.m);svg.appendChild(mes);});chart.appendChild(svg);
+ }
+ const clear=document.getElementById('limparMes'+cap);if(clear)clear.hidden=!selected;
+ const centros=new Map();linhas.filter(l=>!selected || l.mes===selected).forEach(l=>{const nome=l.centro||'Não informado',a=centros.get(nome)||{qtd:0,valor:0,pedidos:new Set()};a.valor+=l.valor;if(l.pedido)a.pedidos.add(l.pedido);else a.qtd++;centros.set(nome,a);});
+ const dados=[...centros.entries()].sort((a,b)=>custo?b[1].valor-a[1].valor:(b[1].pedidos.size+b[1].qtd)-(a[1].pedidos.size+a[1].qtd));
+ cc.replaceChildren();if(!dados.length){cc.textContent='Nenhum centro de custo para os filtros atuais.';return;}
+ const maxCC=Math.max(1,...dados.map(x=>custo?x[1].valor:x[1].pedidos.size+x[1].qtd));
+ dados.forEach(([nome,d])=>{const item=document.createElement('div');item.className='dash-cc-item';const top=document.createElement('div');top.className='dash-cc-top';const label=document.createElement('span');label.textContent=nome;const valor=document.createElement('strong');valor.textContent=custo?moedaDevolucao(d.valor):`${d.pedidos.size+d.qtd} pedidos`;top.append(label,valor);const track=document.createElement('div');track.className='dash-cc-track';const fill=document.createElement('div');fill.className='dash-cc-fill';fill.style.width=(100*(custo?d.valor:d.pedidos.size+d.qtd)/maxCC)+'%';track.appendChild(fill);const sub=document.createElement('small');sub.textContent=`${d.pedidos.size+d.qtd} pedidos · ${moedaDevolucao(d.valor)}`;item.append(top,track,sub);cc.appendChild(item);});
+}
+// Mantém os pontos de entrada originais, substituindo apenas a visualização dos gráficos.
+desenharGraficosEnvios=function(){atualizarVisuaisAnalytics('envios');};
+desenharGraficosDevolucoes=function(){atualizarVisuaisAnalytics('devolucoes');};

@@ -2,81 +2,1033 @@
 <html lang="pt-BR">
 
 <head>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;charset=UTF-8,
-            <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
-            <rect width='0' height='0' rx='20' fill='%23'/>
-            <text x='50%' y='90%' text-anchor='middle' font-size='100'>⚙️</text>
-            </svg>">
     <meta charset="UTF-8">
-    <title>Painel Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Administração | Rastreio de Amostras</title>
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="data:image/svg+xml;charset=UTF-8,
+        <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+            <text x='50%' y='78%' text-anchor='middle' font-size='70'>⚙️</text>
+        </svg>"
+    >
+
     <link rel="stylesheet" href="admin.css">
 </head>
 
 <body>
 
-    <div class="container">
-        <h2>Painel de Permissões</h2>
+    <!-- =========================================================
+         ESTRUTURA PRINCIPAL
+    ========================================================== -->
 
-        <!-- 🔥 NOVO BOTÃO -->
-        <div class="novo-usuario">
-            <button onclick="abrirModalUsuario()">➕ Incluir novo usuário</button>
-        </div>
+    <div class="app-layout">
 
-        <table class="tabela-usuarios">
-            <thead>
-                <tr>
-                    <th>Usuário</th>
-                    <th>Permissões</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="listaUsuarios"></tbody>
-        </table>
+        <!-- =====================================================
+             MENU LATERAL
+        ====================================================== -->
 
-        <button class="btn-salvar" onclick="salvarPermissoesUI()">💾 Salvar Alterações</button>
-    </div>
+        <aside class="sidebar" id="sidebar">
 
-    <!-- 🔥 MODAL -->
-    <div id="modalUsuario" class="modal oculto">
-        <div class="modal-content">
+            <div class="sidebar-top">
 
-            <h3>Novo Usuário</h3>
+                <!-- IDENTIDADE -->
+                <div class="brand">
 
-            <input type="text" id="modalNomeUsuario" placeholder="Digite o usuário">
+                    <div class="brand-logo">
+                        4K
+                    </div>
 
-            <div class="modal-permissoes">
-                <label><input type="checkbox" value="rastreio_amostra"> Rastreio Amostras</label>
-                <label><input type="checkbox" value="rankprod"> RankProd</label>
-                <label><input type="checkbox" value="retorno_amostras"> Retornos</label>
-                <label><input type="checkbox" value="relatorio"> Relatório</label>
-                <label><input type="checkbox" value="analytics"> Analytics</label>
-                <label><input type="checkbox" value="admin"> Admin</label>
-                <label><input type="checkbox" class="chkSupervisao" value="V00"> V00</label>
-                <label><input type="checkbox" class="chkSupervisao" value="S50"> S50</label>
-                <label><input type="checkbox" class="chkSupervisao" value="S55"> S55</label>
-                <label><input type="checkbox" class="chkSupervisao" value="S00"> S00</label>
+                    <div class="brand-text">
+                        <strong>GRUPO 4K</strong>
+                        <span>Rastreio de Amostras</span>
+                    </div>
+
+                </div>
+
+
+                <!-- MENU PRINCIPAL -->
+
+                <div class="sidebar-section-title">
+                    MENU
+                </div>
+
+                <nav class="sidebar-menu">
+
+                    <a
+                        href="tela_inicio.html"
+                        class="menu-item"
+                        aria-label="Início"
+                    >
+                        <span class="menu-icon">⌂</span>
+                        <span>Início</span>
+                    </a>
+
+
+                    <a
+                        href="rastreio_amostra.html"
+                        class="menu-item"
+                        aria-label="Rastreio"
+                    >
+                        <span class="menu-icon">▣</span>
+                        <span>Rastreio</span>
+                    </a>
+
+
+                    <a
+                        href="#"
+                        class="menu-item"
+                        aria-label="RankProd"
+                    >
+                        <span class="menu-icon">▥</span>
+                        <span>RankProd</span>
+                    </a>
+
+
+                    <a
+                        href="#"
+                        class="menu-item"
+                        aria-label="Retornos"
+                    >
+                        <span class="menu-icon">↩</span>
+                        <span>Retornos</span>
+                    </a>
+
+
+                    <a
+                        href="#"
+                        class="menu-item"
+                        aria-label="Relatórios"
+                    >
+                        <span class="menu-icon">▤</span>
+                        <span>Relatórios</span>
+                    </a>
+
+
+                    <a
+                        href="#"
+                        class="menu-item"
+                        aria-label="Analytics"
+                    >
+                        <span class="menu-icon">◫</span>
+                        <span>Analytics</span>
+                    </a>
+
+                </nav>
+
+
+                <!-- ADMINISTRAÇÃO -->
+
+                <div class="sidebar-section-title sidebar-section-admin">
+                    ADMINISTRAÇÃO
+                </div>
+
+                <nav class="sidebar-menu">
+
+                    <a
+                        href="#"
+                        class="menu-item active"
+                        aria-label="Usuários e permissões"
+                    >
+                        <span class="menu-icon">⚙</span>
+                        <span>Usuários e permissões</span>
+                    </a>
+
+                </nav>
+
             </div>
 
-            <div class="modal-acoes">
-                <button onclick="salvarNovoUsuario()">💾 Salvar</button>
-                <button onclick="fecharModalUsuario()">❌ Cancelar</button>
+
+            <!-- STATUS -->
+
+            <div class="sidebar-bottom">
+
+                <div class="system-version">
+
+                    <span class="version-dot"></span>
+
+                    <div>
+                        <strong>Sistema online</strong>
+                        <small>Painel administrativo</small>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =====================================================
+             CONTEÚDO PRINCIPAL
+        ====================================================== -->
+
+        <main class="main-content">
+
+            <!-- =================================================
+                 BARRA SUPERIOR
+            ================================================== -->
+
+            <header class="topbar">
+
+                <div class="topbar-left">
+
+                    <!-- BOTÃO DA SIDEBAR -->
+
+                    <button
+                        type="button"
+                        class="sidebar-toggle"
+                        id="btnToggleSidebar"
+                        aria-label="Mostrar menu lateral"
+                        aria-expanded="false"
+                        title="Mostrar menu lateral"
+                    >
+                        <span class="toggle-icon">☰</span>
+                    </button>
+
+
+                    <!-- LOGO -->
+
+                    <div class="topbar-logo">
+
+                        <img
+                            id="logoMarca"
+                            src="Imagens/Logo - Grupo 4k - Branco.png"
+                            class="logo"
+                            alt="Grupo 4K"
+                        >
+
+                    </div>
+
+
+                    <!-- BREADCRUMB -->
+
+                    <div class="breadcrumb">
+
+                        <span class="breadcrumb-muted">
+                            Administração
+                        </span>
+
+                        <span class="breadcrumb-separator">
+                            /
+                        </span>
+
+                        <strong>
+                            Usuários e permissões
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     ÁREA DIREITA
+                ================================================== -->
+
+                <div class="topbar-right">
+
+                    <!-- BUSCA -->
+
+                    <div class="admin-search">
+
+                        <span class="admin-search-icon">
+                            🔍
+                        </span>
+
+                        <input
+                            type="search"
+                            id="buscaUsuarios"
+                            placeholder="Buscar usuário..."
+                            autocomplete="off"
+                            aria-label="Buscar usuário"
+                        >
+
+                        <button
+                            type="button"
+                            class="admin-search-clear"
+                            id="btnLimparBusca"
+                            aria-label="Limpar busca"
+                            title="Limpar busca"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+
+                    <!-- USUÁRIO LOGADO -->
+
+                    <div class="topbar-user">
+
+                        <div class="online-indicator"></div>
+
+                        <span id="usuarioAdmin">
+                            Administrador
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- =================================================
+                 CONTEÚDO
+            ================================================== -->
+
+            <div class="page-content">
+
+                <!-- =================================================
+                     CABEÇALHO
+                ================================================== -->
+
+                <section class="page-header">
+
+                    <div>
+
+                        <div class="page-eyebrow">
+                            PAINEL ADMINISTRATIVO
+                        </div>
+
+                        <h1>
+                            Usuários e permissões
+                        </h1>
+
+                        <p>
+                            Gerencie os acessos e permissões dos usuários do sistema.
+                        </p>
+
+                    </div>
+
+
+                    <!-- NOVO USUÁRIO -->
+
+                    <button
+                        type="button"
+                        class="btn-primary"
+                        id="btnNovoUsuario"
+                    >
+
+                        <span class="btn-primary-icon">
+                            +
+                        </span>
+
+                        Novo usuário
+
+                    </button>
+
+                </section>
+
+
+                <!-- =================================================
+                     CARDS DE ESTATÍSTICAS
+                ================================================== -->
+
+
+
+                <!-- =================================================
+                     PAINEL DE USUÁRIOS
+                ================================================== -->
+
+                <section class="users-panel">
+
+
+                    <!-- CABEÇALHO DO PAINEL -->
+
+                    <div class="panel-header">
+
+                        <div class="panel-title">
+
+                            <div class="panel-title-icon">
+                                👤
+                            </div>
+
+                            <div>
+
+                                <h2>
+                                    Usuários cadastrados
+                                </h2>
+
+                                <p>
+                                    Configure as permissões de acesso de cada usuário.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="panel-status">
+
+    <div
+        class="indicador-usuarios-online"
+        id="indicadorUsuariosOnline"
+        title="Usuários atualmente online"
+    >
+        <span class="indicador-online-ponto"></span>
+
+        <span id="totalUsuariosOnline">
+            0
+        </span>
+
+        <span>
+            online
+        </span>
+    </div>
+
+    <span class="status-dot"></span>
+
+    <span id="statusBuscaUsuarios">
+        Dados sincronizados
+    </span>
+
+</div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         TABELA
+                    ================================================== -->
+
+                    <div class="table-container">
+
+                        <table class="tabela-usuarios">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th class="th-usuario">
+                                        USUÁRIO
+                                    </th>
+
+                                    <th class="th-codigo">
+                                        CÓDIGO
+                                    </th>
+
+                                    <th class="th-permissoes">
+                                        PERMISSÕES
+                                    </th>
+
+                                    <th class="th-presenca">
+                                        STATUS
+                                    </th>
+
+                                    <th class="th-acoes">
+                                        AÇÕES
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="listaUsuarios">
+                                <!--
+                                    O conteúdo é gerado
+                                    dinamicamente pelo admin.js.
+                                -->
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         RODAPÉ
+                    ================================================== -->
+
+                    <div class="panel-footer">
+
+                        <div class="footer-description">
+
+                            <span class="footer-info-icon">
+                                i
+                            </span>
+
+                            <span>
+                                Altere as permissões e clique em salvar para aplicar as mudanças.
+                            </span>
+
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="btn-save"
+                            id="btnSalvarPermissoes"
+                        >
+
+                            <span>
+                                ✓
+                            </span>
+
+                            Salvar alterações
+
+                        </button>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <!-- =========================================================
+         MODAL DE USUÁRIO
+    ========================================================== -->
+
+    <div
+        id="modalUsuario"
+        class="modal oculto"
+        aria-hidden="true"
+    >
+
+        <div class="modal-overlay"></div>
+
+
+        <div
+            class="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tituloModalUsuario"
+        >
+
+            <!-- =================================================
+                 CABEÇALHO DO MODAL
+            ================================================== -->
+
+            <div class="modal-header">
+
+                <div class="modal-header-icon">
+                    +
+                </div>
+
+
+                <div class="modal-header-text">
+
+                    <span>
+                        ADMINISTRAÇÃO
+                    </span>
+
+                    <h3 id="tituloModalUsuario">
+                        Novo usuário
+                    </h3>
+
+                    <p>
+                        Cadastre um usuário e defina suas permissões.
+                    </p>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    id="btnFecharModalUsuario"
+                    aria-label="Fechar"
+                    title="Fechar"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 CORPO
+            ================================================== -->
+
+            <div class="modal-body">
+
+
+                <!-- =================================================
+                     IDENTIFICAÇÃO
+                ================================================== -->
+
+                <div class="form-section">
+
+                    <div class="form-section-title">
+
+                        <span class="form-section-icon">
+                            👤
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Identificação
+                            </strong>
+
+                            <small>
+                                Informe o usuário de acesso.
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- NOME -->
+
+                    <!-- USUÁRIO -->
+<div class="input-group">
+    <label for="modalNomeUsuario">
+        Usuário
+    </label>
+    <input
+        type="text"
+        id="modalNomeUsuario"
+        placeholder="Ex.: joao.silva"
+        autocomplete="off"
+    >
+    <small>
+        O usuário será salvo em letras minúsculas.
+    </small>
+</div>
+
+<!-- NOME COMPLETO -->
+<div class="input-group">
+    <label for="modalNomeCompleto">
+        Nome completo
+    </label>
+    <input
+        type="text"
+        id="modalNomeCompleto"
+        placeholder="Ex.: João da Silva"
+        autocomplete="name"
+    >
+    <small>
+        Nome completo do vendedor/usuário.
+    </small>
+</div>
+
+<!-- E-MAIL -->
+<div class="input-group">
+    <label for="modalEmailUsuario">
+        E-mail
+    </label>
+    <input
+        type="email"
+        id="modalEmailUsuario"
+        placeholder="Ex.: joao.silva@quatrok.com.br"
+        autocomplete="email"
+    >
+    <small>
+        E-mail utilizado para identificação e contato.
+    </small>
+</div>
+
+<!-- CÓDIGO -->
+<div class="input-group">
+    <label for="modalCodigoVendedor">
+        Código do vendedor
+    </label>
+    <input
+        type="text"
+        id="modalCodigoVendedor"
+        placeholder="Ex.: V00000 ou S50000"
+        autocomplete="off"
+        maxlength="20"
+    >
+    <small>
+        Informe o código utilizado para identificar o vendedor no sistema.
+    </small>
+</div>
+                </div>
+
+
+                <!-- =================================================
+                     TELAS
+                ================================================== -->
+
+                <div class="form-section">
+
+                    <div class="form-section-title">
+
+                        <span class="form-section-icon blue">
+                            ◈
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Acesso às telas
+                            </strong>
+
+                            <small>
+                                Selecione quais módulos o usuário poderá acessar.
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="permission-grid">
+
+
+                        <!-- RASTREIO -->
+
+                        <label class="permission-option">
+
+                            <input
+                                type="checkbox"
+                                value="rastreio_amostra"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    Rastreio
+                                </strong>
+
+                                <small>
+                                    Rastreio de amostras
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- RANKPROD -->
+
+                        <label class="permission-option">
+
+                            <input
+                                type="checkbox"
+                                value="rankprod"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    RankProd
+                                </strong>
+
+                                <small>
+                                    Ranking de produtos
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- RETORNOS -->
+
+                        <label class="permission-option">
+
+                            <input
+                                type="checkbox"
+                                value="retorno_amostras"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    Retornos
+                                </strong>
+
+                                <small>
+                                    Retornos de amostras
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- RELATÓRIO -->
+
+                        <label class="permission-option">
+
+                            <input
+                                type="checkbox"
+                                value="relatorio"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    Relatórios
+                                </strong>
+
+                                <small>
+                                    Relatórios do sistema
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- ANALYTICS -->
+
+                        <label class="permission-option">
+
+                            <input
+                                type="checkbox"
+                                value="analytics"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    Analytics
+                                </strong>
+
+                                <small>
+                                    Indicadores e análises
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- ADMIN -->
+
+                        <label class="permission-option">
+
+                            <input
+                                type="checkbox"
+                                value="admin"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    Admin
+                                </strong>
+
+                                <small>
+                                    Administração do sistema
+                                </small>
+
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =================================================
+                     SUPERVISÃO
+                ================================================== -->
+
+                <div class="form-section">
+
+                    <div class="form-section-title">
+
+                        <span class="form-section-icon green">
+                            ✓
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Supervisão
+                            </strong>
+
+                            <small>
+                                Defina os grupos de supervisão permitidos.
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="supervisao-grid">
+
+
+                        <!-- V00 -->
+
+                        <label class="permission-option supervision">
+
+                            <input
+                                type="checkbox"
+                                class="chkSupervisao"
+                                value="V00"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    V00
+                                </strong>
+
+                                <small>
+                                    Grupo V00
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- S50 -->
+
+                        <label class="permission-option supervision">
+
+                            <input
+                                type="checkbox"
+                                class="chkSupervisao"
+                                value="S50"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    S50
+                                </strong>
+
+                                <small>
+                                    Televendas
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- S55 -->
+
+                        <label class="permission-option supervision">
+
+                            <input
+                                type="checkbox"
+                                class="chkSupervisao"
+                                value="S55"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    S55
+                                </strong>
+
+                                <small>
+                                    Grupo S55
+                                </small>
+
+                            </span>
+
+                        </label>
+
+
+                        <!-- S00 -->
+
+                        <label class="permission-option supervision">
+
+                            <input
+                                type="checkbox"
+                                class="chkSupervisao"
+                                value="S00"
+                            >
+
+                            <span class="custom-checkbox"></span>
+
+                            <span class="permission-text">
+
+                                <strong>
+                                    S00
+                                </strong>
+
+                                <small>
+                                    Loja
+                                </small>
+
+                            </span>
+
+                        </label>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 RODAPÉ DO MODAL
+            ================================================== -->
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn-cancel"
+                    id="btnCancelarModalUsuario"
+                >
+                    Cancelar
+                </button>
+
+
+                <button
+                    type="button"
+                    class="btn-modal-save"
+                    id="btnSalvarUsuario"
+                >
+
+                    <span>
+                        ✓
+                    </span>
+
+                    Criar usuário
+
+                </button>
+
             </div>
 
         </div>
+
     </div>
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+         
+         Toda a lógica fica centralizada no admin.js.
+    ========================================================== -->
 
     <script src="tela_inicio.js"></script>
     <script src="admin.js"></script>
 
-    <script>
-        const usuario = localStorage.getItem("usuarioLogado");
-
-        if (!temPermissaoTela(usuario, "admin")) {
-            alert("Acesso restrito");
-            window.location.href = "tela_inicio.html";
-        }
-    </script>
-
 </body>
 
 </html>
+

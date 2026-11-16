@@ -55,166 +55,275 @@
     <!-- =========================================================
          SIDEBAR
     ========================================================== -->
-
-    <aside class="sidebar">
-
-        <!-- =====================================================
-             TOPO DO MENU
-        ====================================================== -->
-
-        <div class="menu-topo">
-
-            <button
-                class="btnInicio"
-                onclick="window.location.href='tela_inicio.html'"
-            >
-
-                <svg
-                    viewBox="0 0 24 24"
-                    width="22"
-                    height="22"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-
-                    <!-- Telhado -->
-
-                    <path
-                        d="M3 10L12 3L21 10"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-
-                    <!-- Corpo -->
-
-                    <path
-                        d="M5 10V20H19V10"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-
-                    <!-- Porta -->
-
-                    <path
-                        d="M10 20V14H14V20"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-
-                </svg>
-
-                <span>Início</span>
-
-            </button>
-
-        </div>
-
-
-        <!-- =====================================================
-             MENU CENTRAL
-        ====================================================== -->
-
-        <div class="menu-centro">
-
-            <button
-                class="menu-btn"
-                data-tela="rastreio_amostra"
-                data-link="rastreio_amostra.html"
-            >
-                📈 Rastreio Amostras
-            </button>
-
-
-            <button
-                class="menu-btn"
-                data-tela="rankprod"
-                data-link="rankprod.html"
-            >
-                📈 RankProd
-            </button>
-
-
-            <button
-                class="menu-btn"
-                data-tela="retorno_amostras"
-                data-link="retorno_amostras.html"
-            >
-                💸 Retorno de Amostras
-            </button>
-
-
-            <button
-                class="menu-btn"
-                data-tela="relatorio"
-                data-link="consolidados.html"
-            >
-                📋 Relatório Consolidados
-            </button>
-
-
-            <button
-                class="menu-btn"
-                data-tela="analytics"
-                data-link="analytics.html"
-            >
-                📈 Correios | Análises de Amostras
-            </button>
-
-        </div>
-
-
-        <!-- =====================================================
-             PARTE INFERIOR DO MENU
-        ====================================================== -->
-
-        <div class="menu-bottom">
-
-            <button
-                id="btnLogout"
-                class="btn-logout"
-            >
-
-                <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                >
-
-                    <path
-                        d="M12.9999 2C10.2385 2 7.99991 4.23858 7.99991 7C7.99991 7.55228 8.44762 8 8.99991 8C9.55219 8 9.99991 7.55228 9.99991 7C9.99991 5.34315 11.3431 4 12.9999 4H16.9999C18.6568 4 19.9999 5.34315 19.9999 7V17C19.9999 18.6569 18.6568 20 16.9999 20H12.9999C11.3431 20 9.99991 18.6569 9.99991 17C9.99991 16.4477 9.55219 16 8.99991 16C8.44762 16 7.99991 16.4477 7.99991 17C7.99991 19.7614 10.2385 22 12.9999 22H16.9999C19.7613 22 21.9999 19.7614 21.9999 17V7C21.9999 4.23858 19.7613 2 16.9999 2H12.9999Z"
-                        fill="currentColor"
-                    />
-
-                    <path
-                        d="M13.9999 11C14.5522 11 14.9999 11.4477 14.9999 12C14.9999 12.5523 14.5522 13 13.9999 13V11Z"
-                        fill="currentColor"
-                    />
-
-                    <path
-                        d="M5.71783 11C5.80685 10.8902 5.89214 10.7837 5.97282 10.682C6.21831 10.3723 6.42615 10.1004 6.57291 9.90549C6.64636 9.80795 6.70468 9.72946 6.74495 9.67492L6.79152 9.61162L6.804 9.59454L6.80842 9.58848C6.80846 9.58842 6.80892 9.58778 5.99991 9L6.80842 9.58848C7.13304 9.14167 7.0345 8.51561 6.58769 8.19098C6.14091 7.86637 5.51558 7.9654 5.19094 8.41215L5.18812 8.41602L5.17788 8.43002L5.13612 8.48679C5.09918 8.53682 5.04456 8.61033 4.97516 8.7025C4.83623 8.88702 4.63874 9.14542 4.40567 9.43937C3.93443 10.0337 3.33759 10.7481 2.7928 11.2929L2.08569 12L2.7928 12.7071C3.33759 13.2519 3.93443 13.9663 4.40567 14.5606C4.63874 14.8546 4.83623 15.113 4.97516 15.2975C5.04456 15.3897 5.09918 15.4632 5.13612 15.5132L5.17788 15.57L5.18812 15.584L5.19045 15.5872C5.51509 16.0339 6.14091 16.1336 6.58769 15.809C7.0345 15.4844 7.13355 14.859 6.80892 14.4122L5.99991 15C6.80892 14.4122 6.80897 14.4123 6.80892 14.4122L6.804 14.4055L6.79152 14.3884L6.74495 14.3251C6.70468 14.2705 6.64636 14.1921 6.57291 14.0945C6.42615 13.8996 6.21831 13.6277 5.97282 13.318C5.89214 13.2163 5.80685 13.1098 5.71783 13H13.9999V11H5.71783Z"
-                        fill="currentColor"
-                    />
-
-                </svg>
-
-                <span>Logout</span>
-
-            </button>
-
-        </div>
-
-    </aside>
-
-
     <!-- =========================================================
-         OVERLAY DA SIDEBAR
+         SIDEBAR ESTILO VÍDEO — INTEGRADA AO SISTEMA
     ========================================================== -->
+
+    <aside class="sidebar sidebar-video-integrada" aria-label="Menu principal">
+
+        <!-- Barra estreita permanente: somente atalhos -->
+        <div class="sidebar-video-rail">
+
+            <nav class="sidebar-video-rail-nav" aria-label="Atalhos">
+
+                <button
+                    class="sidebar-video-rail-btn menu-btn"
+                    data-tela="rastreio_amostra"
+                    data-link="rastreio_amostra.html"
+                    title="Rastreio Amostras"
+                    type="button"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 11.5 12 5l8 6.5v7a1 1 0 0 1-1 1h-5v-5h-4v5H5a1 1 0 0 1-1-1z"></path>
+                    </svg>
+                </button>
+
+                <button
+                    class="sidebar-video-rail-btn menu-btn"
+                    data-tela="rankprod"
+                    data-link="rankprod.html"
+                    title="RankProd"
+                    type="button"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 19V9M12 19V5M19 19v-8"></path>
+                    </svg>
+                </button>
+
+                <button
+                    id="btnConsultaFreteRail"
+                    class="sidebar-video-rail-btn"
+                    type="button"
+                    data-tooltip="Consultar frete e prazo"
+                    aria-label="Consultar frete e prazo"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 6h11v11H3z"></path>
+                        <path d="M14 10h4l3 3v4h-7z"></path>
+                        <circle cx="7.5" cy="18" r="1.8"></circle>
+                        <circle cx="17.5" cy="18" r="1.8"></circle>
+                    </svg>
+                </button>
+
+                <button
+                    class="sidebar-video-rail-btn menu-btn"
+                    data-tela="retorno_amostras"
+                    data-link="retorno_amostras.html"
+                    title="Retorno de Amostras"
+                    type="button"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 7h10l-2.5-2.5M17 17H7l2.5 2.5M17 7a5 5 0 0 1 2 4M7 17a5 5 0 0 1-2-4"></path>
+                    </svg>
+                </button>
+
+                <button
+                    class="sidebar-video-rail-btn menu-btn"
+                    data-tela="relatorio"
+                    data-link="consolidados.html"
+                    title="Relatório Consolidados"
+                    type="button"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 3h9l3 3v15H6zM9 12h6M9 16h6M9 8h3"></path>
+                    </svg>
+                </button>
+
+                <button
+                    class="sidebar-video-rail-btn menu-btn"
+                    data-tela="analytics"
+                    data-link="analytics.html"
+                    title="Análises de Amostras"
+                    type="button"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M5 19V5M5 19h15M8 16l3-4 3 2 4-6"></path>
+                    </svg>
+                </button>
+
+            </nav>
+
+            <div class="sidebar-video-rail-bottom">
+                <button
+                    id="btnLogoutRail"
+                    class="sidebar-video-rail-btn"
+                    type="button"
+                    title="Sair"
+                    aria-label="Sair"
+                >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4M9 12h9"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Painel flutuante -->
+        <div class="sidebar-video-panel" aria-hidden="true">
+
+            <div class="sidebar-video-panel-dots" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </div>
+
+            <div class="sidebar-video-brand">
+                <div class="sidebar-video-brand-title">Rastreio</div>
+                <div class="sidebar-video-brand-subtitle">MENU</div>
+            </div>
+
+            <nav class="sidebar-video-panel-nav" aria-label="Menu principal">
+
+                <button
+                    class="sidebar-video-panel-item menu-btn"
+                    data-tela="rastreio_amostra"
+                    data-link="rastreio_amostra.html"
+                    type="button"
+                >
+                    <span class="sidebar-video-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5v7a1 1 0 0 1-1 1h-5v-5h-4v5H5a1 1 0 0 1-1-1z"></path></svg>
+                    </span>
+                    <span class="sidebar-video-item-text">
+                        <strong>Rastreio Amostras</strong>
+                        <small>Pedidos e rastreios</small>
+                    </span>
+                    <span class="sidebar-video-arrow">›</span>
+                </button>
+
+                <button
+                    class="sidebar-video-panel-item menu-btn"
+                    data-tela="rankprod"
+                    data-link="rankprod.html"
+                    type="button"
+                >
+                    <span class="sidebar-video-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9M12 19V5M19 19v-8"></path></svg>
+                    </span>
+                    <span class="sidebar-video-item-text">
+                        <strong>RankProd</strong>
+                        <small>Ranking de produtos</small>
+                    </span>
+                    <span class="sidebar-video-arrow">›</span>
+                </button>
+
+                <button
+                    id="btnConsultaFrete"
+                    class="sidebar-video-panel-item sidebar-video-action-item"
+                    type="button"
+                    aria-label="Consultar frete e prazo"
+                >
+                    <span class="sidebar-video-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"></path><circle cx="7.5" cy="18" r="1.8"></circle><circle cx="17.5" cy="18" r="1.8"></circle></svg>
+                    </span>
+                    <span class="sidebar-video-item-text">
+                        <strong>Frete e prazos</strong>
+                        <small>Consultar PAC e SEDEX</small>
+                    </span>
+                    <span class="sidebar-video-arrow">›</span>
+                </button>
+
+                <button
+                    class="sidebar-video-panel-item menu-btn"
+                    data-tela="retorno_amostras"
+                    data-link="retorno_amostras.html"
+                    type="button"
+                >
+                    <span class="sidebar-video-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10l-2.5-2.5M17 17H7l2.5 2.5M17 7a5 5 0 0 1 2 4M7 17a5 5 0 0 1-2-4"></path></svg>
+                    </span>
+                    <span class="sidebar-video-item-text">
+                        <strong>Retorno de Amostras</strong>
+                        <small>Controle de retornos</small>
+                    </span>
+                    <span class="sidebar-video-arrow">›</span>
+                </button>
+
+                <button
+                    class="sidebar-video-panel-item menu-btn"
+                    data-tela="relatorio"
+                    data-link="consolidados.html"
+                    type="button"
+                >
+                    <span class="sidebar-video-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6zM9 12h6M9 16h6M9 8h3"></path></svg>
+                    </span>
+                    <span class="sidebar-video-item-text">
+                        <strong>Relatório Consolidados</strong>
+                        <small>Consolidados e indicadores</small>
+                    </span>
+                    <span class="sidebar-video-arrow">›</span>
+                </button>
+
+                <button
+                    class="sidebar-video-panel-item menu-btn"
+                    data-tela="analytics"
+                    data-link="analytics.html"
+                    type="button"
+                >
+                    <span class="sidebar-video-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V5M5 19h15M8 16l3-4 3 2 4-6"></path></svg>
+                    </span>
+                    <span class="sidebar-video-item-text">
+                        <strong>Análises de Amostras</strong>
+                        <small>Correios e analytics</small>
+                    </span>
+                    <span class="sidebar-video-arrow">›</span>
+                </button>
+
+                <div class="sidebar-video-divider"></div>
+
+                <button
+                    class="sidebar-video-panel-item sidebar-video-secondary"
+                    type="button"
+                    onclick="window.location.href='tela_inicio.html'"
+                >
+                    <span class="sidebar-video-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5v7a1 1 0 0 1-1 1h-5v-5h-4v5H5a1 1 0 0 1-1-1z"></path></svg>
+                    </span>
+                    <span class="sidebar-video-item-text">
+                        <strong>Início</strong>
+                        <small>Voltar para a tela inicial</small>
+                    </span>
+                </button>
+
+                <button
+                    id="btnFeedback"
+                    class="sidebar-video-panel-item sidebar-video-secondary sidebar-video-feedback-item"
+                    type="button"
+                    aria-label="Enviar feedback"
+                >
+                    <span class="sidebar-video-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3.5 2.6 5.3 5.9.9-4.25 4.15 1 5.85L12 16.9l-5.25 2.8 1-5.85L3.5 9.7l5.9-.9z"></path></svg>
+                    </span>
+                    <span class="sidebar-video-item-text">
+                        <strong>Enviar feedback</strong>
+                        <small>Compartilhar sua opinião</small>
+                    </span>
+                </button>
+
+                <button
+                    id="btnLogout"
+                    class="sidebar-video-panel-item sidebar-video-secondary"
+                    type="button"
+                >
+                    <span class="sidebar-video-icon">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 8l4 4-4 4M9 12h9"></path></svg>
+                    </span>
+                    <span class="sidebar-video-item-text">
+                        <strong>Sair</strong>
+                        <small>Encerrar sessão</small>
+                    </span>
+                </button>
+
+            </nav>
+
+            <div class="sidebar-video-profile">
+                <div class="sidebar-video-avatar" id="sidebarVideoAvatar">U</div>
+                <div class="sidebar-video-profile-text">
+                    <strong id="sidebarVideoUserName">Usuário</strong>
+                    <small id="sidebarVideoUserCode">Conta ativa</small>
+                </div>
+            </div>
+        </div>
+    </aside>
 
     <div class="overlay-sidebar"></div>
 
@@ -241,6 +350,45 @@
 
         </div>
 
+    </div>
+
+
+    <!-- =========================================================
+         MODAL - RASTREAMENTO CORREIOS
+    ========================================================== -->
+
+    <div
+        id="overlayRastreioCorreios"
+        class="overlay-rastreio-correios oculto"
+        aria-hidden="true"
+    >
+        <div
+            class="painel-rastreio-correios"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tituloModalRastreio"
+        >
+            <div id="conteudoRastreioCorreios"></div>
+        </div>
+    </div>
+
+
+    <!-- =========================================================
+         MODAL - COTAÇÃO DE FRETE E PRAZO
+    ========================================================== -->
+    <div
+        id="overlayConsultaFrete"
+        class="overlay-rastreio-correios oculto"
+        aria-hidden="true"
+    >
+        <div
+            class="painel-rastreio-correios painel-consulta-frete"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tituloModalFrete"
+        >
+            <div id="conteudoConsultaFrete"></div>
+        </div>
     </div>
 
 
@@ -280,22 +428,30 @@
         id="boxFiltros"
     >
 
-
         <!-- =====================================================
-             BOTÃO MENU
-        ====================================================== -->
-
-        <button
-            class="btn-menu"
-            onclick="toggleMenu()"
-            type="button"
-        >
-            ☰
-        </button>
+             MENU DA SIDEBAR — recorte da antiga barra lateral
+             ====================================================== -->
+        <div class="topbar-sidebar-menu-wrap">
 
 
-        <!-- =====================================================
-             LOGO
+            <button
+                id="btnMenuSidebarTopbar"
+                class="topbar-sidebar-menu-btn"
+                type="button"
+                aria-label="Abrir menu"
+                aria-expanded="false"
+                title="Abrir menu"
+                onclick="toggleMenu()"
+            >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16"></path>
+                </svg>
+            </button>
+        </div>
+
+
+    <!-- =====================================================
+             LOGO CENTRAL
         ====================================================== -->
 
         <div class="logo-topo">
@@ -315,10 +471,45 @@
 
         <div class="acoes-topo">
 
+            <!-- =================================================
+                 STATUS DA ATUALIZAÇÃO DOS RASTREIOS
+            ================================================== -->
+
             <div
-                id="boasVindas"
-                class="usuario-topo"
-            ></div>
+                id="statusAtualizacaoTopbar"
+                class="status-atualizacao-topbar"
+                role="button"
+                tabindex="0"
+                aria-live="polite"
+                aria-label="Atualizar rastreios dos Correios"
+                title="Clique para atualizar os rastreios novamente"
+                onclick="atualizarRastreiosAgora()"
+                onkeydown="if(event.key === 'Enter' || event.key === ' ') { event.preventDefault(); atualizarRastreiosAgora(); }"
+            >
+                <div class="status-atualizacao-info">
+                    <span id="statusAtualizacaoIcone" class="status-atualizacao-icone">↻</span>
+                    <div class="status-atualizacao-textos">
+                        <span id="statusAtualizacaoTexto" class="status-atualizacao-texto">Preparando atualização...</span>
+                        <span id="statusAtualizacaoContagem" class="status-atualizacao-contagem">Aguardando consulta</span>
+                    </div>
+                </div>
+                <div class="status-atualizacao-barra">
+                    <span id="statusAtualizacaoBarraProgresso"></span>
+                </div>
+            </div>
+
+            <!-- =================================================
+                 RELÓGIO
+            ================================================== -->
+
+            <div
+                id="relogioTopbar"
+                class="relogio-topbar"
+                title="Horário atual"
+            >
+                <span id="relogioHora">--:--</span>
+                <span id="relogioData">--/--</span>
+            </div>
 
 
             <!-- =================================================
@@ -808,6 +999,53 @@
         class="lista-cards"
     ></section>
 
+
+
+    <!-- =========================================================
+         MODAL - FEEDBACK
+    ========================================================== -->
+
+    <div id="overlayFeedback" class="fb-overlay oculto" aria-hidden="true">
+        <div class="fb-painel" role="dialog" aria-modal="true" aria-labelledby="fbTitulo">
+
+            <button id="fbFechar" class="fb-fechar" type="button" aria-label="Fechar">✕</button>
+
+            <div id="fbFormulario">
+                <h3 id="fbTitulo" class="fb-titulo">Sua opinião é importante</h3>
+                <p class="fb-subtitulo">Como está sendo sua experiência com o site?</p>
+
+                <div class="fb-estrelas" id="fbEstrelas" role="radiogroup" aria-label="Nota de 1 a 5">
+                    <button type="button" class="fb-estrela" data-nota="1" role="radio" aria-checked="false" aria-label="1 estrela">★</button>
+                    <button type="button" class="fb-estrela" data-nota="2" role="radio" aria-checked="false" aria-label="2 estrelas">★</button>
+                    <button type="button" class="fb-estrela" data-nota="3" role="radio" aria-checked="false" aria-label="3 estrelas">★</button>
+                    <button type="button" class="fb-estrela" data-nota="4" role="radio" aria-checked="false" aria-label="4 estrelas">★</button>
+                    <button type="button" class="fb-estrela" data-nota="5" role="radio" aria-checked="false" aria-label="5 estrelas">★</button>
+                </div>
+                <div id="fbNotaTexto" class="fb-nota-texto">Toque nas estrelas para avaliar</div>
+
+                <label for="fbComentario" class="fb-label">Quer contar mais? (opcional)</label>
+                <textarea
+                    id="fbComentario"
+                    class="fb-comentario"
+                    maxlength="1000"
+                    rows="4"
+                    placeholder="Sugestões, problemas, elogios..."
+                ></textarea>
+                <div class="fb-contador"><span id="fbContador">0</span>/1000</div>
+
+                <div id="fbErro" class="fb-erro oculto"></div>
+
+                <button id="fbEnviar" class="fb-enviar" type="button" disabled>Enviar feedback</button>
+            </div>
+
+            <div id="fbSucesso" class="fb-sucesso oculto">
+                <div class="fb-sucesso-icone">✓</div>
+                <h3 class="fb-titulo">Obrigado!</h3>
+                <p class="fb-subtitulo">Seu feedback foi enviado.</p>
+            </div>
+
+        </div>
+    </div>
 
     <!-- =========================================================
          ALERTA NA TELA

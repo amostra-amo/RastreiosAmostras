@@ -503,6 +503,55 @@ function obterDataStatusLinha(linha) {
     return dataStatusCorreios(status);
 }
 
+/* Último evento dos Correios: data legível + dias parado */
+const DIAS_ALERTA_PARADO = 5;
+
+function converterDataEventoCorreios(valor) {
+    if (!valor) return null;
+    const texto = String(valor).trim();
+
+    let m = texto.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
+    if (m) {
+        const [, ano, mes, dia, hora = "00", minuto = "00"] = m;
+        return new Date(+ano, +mes - 1, +dia, +hora, +minuto);
+    }
+
+    m = texto.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})(?:[\sT]+(\d{2}):(\d{2}))?/);
+    if (m) {
+        const [, dia, mes, ano, hora = "00", minuto = "00"] = m;
+        return new Date(+ano, +mes - 1, +dia, +hora, +minuto);
+    }
+
+    return null;
+}
+
+function obterUltimoEventoLinha(linha) {
+    const codigo = normalizarCodigoRastreio(linha?.[1]);
+    const status = obterStatusLocal(codigo);
+    const data = converterDataEventoCorreios(status?.data);
+
+    if (!data || isNaN(data.getTime())) return null;
+
+    const dataTexto = data.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit"
+    });
+
+    const horaTexto = data.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+    const dias = Math.floor(
+        (Date.now() - data.getTime()) / (24 * 60 * 60 * 1000)
+    );
+
+    return {
+        texto: `${dataTexto} às ${horaTexto}`,
+        dias: Math.max(0, dias)
+    };
+}
+
 function linhaAguardandoRetirada(linha) {
     const codigo = normalizarCodigoRastreio(linha?.[1]);
     return statusAguardandoRetirada(obterStatusLocal(codigo));
@@ -3293,6 +3342,9 @@ function renderizar(lista) {
         const dataStatus =
             obterDataStatusLinha(l);
 
+        const ultimoEvento =
+            obterUltimoEventoLinha(l);
+
 
         let faixaHTML = "";
 
@@ -3533,7 +3585,20 @@ function renderizar(lista) {
 
                     </span>
 
-                    <br>
+                    ${
+                        situacao.includes("PENDENTE") && ultimoEvento
+                            ? `
+                                <div class="situacao-ultimo-evento">
+                                    Último evento: ${ultimoEvento.texto}
+                                </div>
+                                ${
+                                    ultimoEvento.dias >= DIAS_ALERTA_PARADO && !temAlertaRetirada
+                                        ? `<div class="selo-parado" title="Sem nova atualização dos Correios desde ${ultimoEvento.texto}">⚠ ${ultimoEvento.dias} dias sem movimentação</div>`
+                                        : ""
+                                }
+                              `
+                            : ""
+                    }
 
                 </div>
 

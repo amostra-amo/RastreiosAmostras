@@ -6358,9 +6358,30 @@ body .sidebar-video-integrada .sidebar-video-divider {
     background: rgba(255, 255, 255, .10) !important;
 }
 
+/* Perfil no rodapé do menu: fundo sólido, os itens rolam por trás */
 body .sidebar-video-integrada .sidebar-video-profile {
-    background: rgba(255, 255, 255, .06) !important;
-    border-color: rgba(255, 255, 255, .10) !important;
+    background: color-mix(in srgb, var(--sb-fundo-painel, #12304f) 88%, #ffffff) !important;
+    border: 1px solid rgba(255, 255, 255, .12) !important;
+    border-radius: 14px;
+    box-shadow: 0 -10px 18px var(--sb-fundo-painel, #12304f);
+    z-index: 2;
+}
+
+body .sidebar-video-integrada .sidebar-video-profile-text strong {
+    font-size: 11px;
+}
+
+body .sidebar-video-integrada .sidebar-video-profile-text small {
+    font-size: 9.5px;
+}
+
+body .sidebar-video-integrada .sidebar-video-avatar {
+    background: var(--sb-indicador, #6fa4e8);
+}
+
+body .sidebar-video-integrada .sidebar-video-panel-nav {
+    padding-bottom: 84px;
+    scrollbar-color: rgba(255, 255, 255, .22) transparent;
 }
 
 body .sidebar-video-integrada .sidebar-video-panel-nav::-webkit-scrollbar-thumb {
@@ -6373,25 +6394,206 @@ body .sidebar-video-integrada .sidebar-video-panel-item.ativo:not(.desativado) {
     color: #ffffff !important;
 }
 
-
 /* =========================================================
-   CARDS — ÚLTIMO EVENTO E AVISO DE PARADO (nov/2026)
+   PAINÉIS DOS CARDS — DETALHES E HISTÓRICO (nov/2026)
+   Cabeçalho na cor do tema, informações em cartões brancos.
+   Para voltar ao visual anterior, apague este bloco.
 ========================================================= */
 
-.cardsituacao .situacao-ultimo-evento {
-    margin-top: 4px;
-    font-size: 11.5px;
+/* ---------------- Detalhes (painel lateral) ---------------- */
+
+#overlayDetalhes .painel-detalhes {
+    background: #f3f6fa;
+    border-radius: 18px 0 0 18px;
+    border-left: 0;
+    box-shadow: -18px 0 50px rgba(2, 8, 23, .35);
+}
+
+#overlayDetalhes #conteudoDetalhes {
+    background:
+        var(--cor-barra, linear-gradient(100deg, #071a33, #12345d)) top / 100% 118px no-repeat,
+        #f3f6fa;
+}
+
+#overlayDetalhes .detalhes-centro h3 {
+    color: #ffffff !important;
+    font-size: 22px;
+    letter-spacing: .2px;
+    border-bottom: 0 !important;
+    margin-bottom: 26px !important;
+}
+
+#overlayDetalhes .icone-envio-detalhes img,
+#overlayDetalhes .icone-envio-detalhes svg {
+    background: #ffffff;
+    padding: 5px 10px;
+    border-radius: 9px;
+    box-shadow: 0 4px 12px rgba(2, 8, 23, .18);
+}
+
+#overlayDetalhes .painel-detalhes .fechar {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, .14) !important;
+    border: 1px solid rgba(255, 255, 255, .28) !important;
+    border-radius: 10px !important;
+    z-index: 6;
+}
+
+#overlayDetalhes .painel-detalhes .fechar:hover {
+    background: rgba(255, 255, 255, .26) !important;
+}
+
+/* Caixas (Nota, Pedido, Postagem, Prazo) */
+#overlayDetalhes .linha-dupla span {
+    background: #ffffff !important;
+    border: 1px solid #e3e9f1 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
+}
+
+#overlayDetalhes .linha-dupla span strong {
+    color: #64748b !important;
+}
+
+/* Linha do rastreio */
+#overlayDetalhes .linha-rastreio-central {
+    background: #ffffff !important;
+    border: 1px solid #e3e9f1 !important;
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .05);
+}
+
+#overlayDetalhes .linha-rastreio-central span {
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-weight: 700;
+    letter-spacing: .4px;
+    color: #0f2747;
+}
+
+#overlayDetalhes .linha-rastreio-central button {
+    color: #ffffff !important;
+    background: var(--cor-sidebar, #173b68) !important;
+    border: 0 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 14px color-mix(in srgb, var(--cor-sidebar, #173b68) 35%, transparent);
+}
+
+#overlayDetalhes .linha-rastreio-central button:hover {
+    filter: brightness(1.12);
+}
+
+/* Cliente, Representante, Localização, Situação: rótulo em cima */
+#overlayDetalhes .detalhes-centro > p {
+    margin: 0 0 10px !important;
+    padding: 11px 14px;
+    background: #ffffff;
+    border: 1px solid #e3e9f1;
+    border-radius: 12px;
+    color: #0f172a;
+    font-size: 14.5px;
+    line-height: 1.35;
+}
+
+#overlayDetalhes .detalhes-centro > p > strong:first-child {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
     color: #64748b;
 }
 
-.cardsituacao .selo-parado {
-    display: inline-block;
-    margin-top: 5px;
-    padding: 3px 9px;
-    border-radius: 999px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #9a3412;
-    background: #ffedd5;
-    border: 1px solid #fed7aa;
+#overlayDetalhes .detalhes-centro > hr {
+    border: 0;
+    height: 1px;
+    background: #dde4ee;
+    margin: 18px 0 14px;
+}
+
+/* Amostras enviadas */
+#overlayDetalhes .amenv strong {
+    font-size: 12px;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: #475569;
+}
+
+#overlayDetalhes .lista-itens li {
+    background: #ffffff;
+    border: 1px solid #e3e9f1;
+    border-radius: 10px;
+    padding: 9px 12px 9px 26px !important;
+    margin-bottom: 6px;
+}
+
+/* ---------------- Histórico dos Correios (modal) ---------------- */
+
+#overlayRastreioCorreios {
+    background: rgba(2, 8, 23, .62);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+#overlayRastreioCorreios .painel-rastreio-correios {
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 30px 80px rgba(2, 8, 23, .45);
+}
+
+#conteudoRastreioCorreios .rastreio-modal-cabecalho {
+    background: var(--cor-barra, linear-gradient(100deg, #071a33, #12345d));
+    border-bottom: 0;
+    color: #ffffff;
+}
+
+#conteudoRastreioCorreios .rastreio-modal-kicker {
+    color: rgba(255, 255, 255, .70) !important;
+}
+
+#conteudoRastreioCorreios .rastreio-modal-cabecalho h2 {
+    color: #ffffff !important;
+}
+
+#conteudoRastreioCorreios .rastreio-modal-codigo {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, .16) !important;
+    border: 1px solid rgba(255, 255, 255, .25) !important;
+}
+
+#conteudoRastreioCorreios .rastreio-modal-fechar {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, .14) !important;
+    border: 1px solid rgba(255, 255, 255, .28) !important;
+}
+
+#conteudoRastreioCorreios .rastreio-modal-fechar:hover {
+    background: rgba(255, 255, 255, .26) !important;
+}
+
+#conteudoRastreioCorreios .rastreio-resumo-api {
+    border: 1px solid #e3e9f1;
+    border-left: 4px solid var(--cor-sidebar-indicador, #4f7fc4);
+    border-radius: 12px;
+    background: #f6f9fd;
+}
+
+#conteudoRastreioCorreios .rastreio-resumo-api.rastreio-resumo-entregue {
+    border-left-color: #39a84a;
+    background: #f0fdf4;
+}
+
+#conteudoRastreioCorreios .rastreio-resumo-api.rastreio-resumo-retorno {
+    border-left-color: #d97706;
+    background: #fffbeb;
+}
+
+#conteudoRastreioCorreios .timeline-evento.atual .timeline-ponto {
+    background: var(--cor-sidebar-indicador, #4f7fc4) !important;
+    border-color: var(--cor-sidebar-indicador, #4f7fc4) !important;
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--cor-sidebar-indicador, #4f7fc4) 22%, transparent) !important;
+}
+
+#conteudoRastreioCorreios .timeline-evento.atual .timeline-descricao {
+    color: #0f2747;
 }

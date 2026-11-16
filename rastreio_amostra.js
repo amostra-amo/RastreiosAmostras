@@ -388,10 +388,12 @@ async function carregarStatusCorreios(opcoes = {}) {
         aConsultar.filter(codigo => !cacheStatus[codigo])
     );
 
-    const totalVisivel = mostrarProgresso ? aConsultar.length : novos.size;
+    // Mostra o andamento sempre que houver pendentes/retornados sendo
+    // conferidos, para o usuário saber que a página está trabalhando.
+    const totalVisivel = aConsultar.length;
 
     if (totalVisivel > 0) {
-        iniciarProgressoCorreiosTopbar(totalVisivel);
+        iniciarProgressoCorreiosTopbar(totalVisivel, "Atualizando pendentes...");
     } else {
         mostrarRastreiosAtualizadosTopbar();
     }
@@ -410,6 +412,26 @@ async function carregarStatusCorreios(opcoes = {}) {
 
     let concluidos = 0;
 
+    // Redesenhar os 925 cards é o que trava a página. Só redesenha
+    // quando algum status realmente mudou, e no máximo a cada 4 s.
+    let houveMudanca = false;
+    let ultimoRedesenho = Date.now();
+
+    function assinaturaStatus(status) {
+        return status
+            ? `${status.situacao}|${status.descricao}|${status.data}`
+            : "";
+    }
+
+    function redesenharSeNecessario(forcar = false) {
+        if (!houveMudanca) return;
+        if (!forcar && Date.now() - ultimoRedesenho < 4000) return;
+        houveMudanca = false;
+        ultimoRedesenho = Date.now();
+        filtrar();
+        atualizarNotificacoes();
+    }
+
     await executarComConcorrencia(
         aConsultar,
         CONCORRENCIA_CORREIOS,
@@ -427,6 +449,10 @@ async function carregarStatusCorreios(opcoes = {}) {
                     atualizadoEm: new Date().toISOString()
                 };
 
+                if (assinaturaStatus(statusCorreios.get(codigo)) !== assinaturaStatus(status)) {
+                    houveMudanca = true;
+                }
+
                 statusCorreios.set(codigo, status);
                 cacheStatus[codigo] = status;
 
@@ -439,6 +465,7 @@ async function carregarStatusCorreios(opcoes = {}) {
                 console.warn(`⚠️ Falha ao consultar ${codigo}:`, erro);
 
                 if (!statusCorreios.has(codigo)) {
+                    houveMudanca = true;
                     statusCorreios.set(codigo, {
                         situacao: "PENDENTE",
                         status: "NÃO FOI POSSÍVEL CONSULTAR",
@@ -449,15 +476,13 @@ async function carregarStatusCorreios(opcoes = {}) {
             } finally {
                 concluidos++;
 
-                if (mostrarProgresso || novos.has(codigo)) {
-                    registrarProgressoCorreiosTopbar(erroConsulta);
-                }
+                registrarProgressoCorreiosTopbar(erroConsulta);
 
-                // Atualiza os cards e salva o cache aos poucos, para não
-                // perder o que já foi consultado se a página for fechada.
-                if (concluidos % 8 === 0 || concluidos === aConsultar.length) {
-                    filtrar();
-                    atualizarNotificacoes();
+                redesenharSeNecessario(concluidos === aConsultar.length);
+
+                // Salva o cache aos poucos, para não perder o que já foi
+                // consultado se a página for fechada.
+                if (concluidos % 20 === 0 || concluidos === aConsultar.length) {
                     salvarCacheJSON(CACHE_STATUS_CORREIOS_KEY, cacheStatus);
                 }
 
@@ -471,10 +496,6 @@ async function carregarStatusCorreios(opcoes = {}) {
     );
 
     salvarCacheJSON(CACHE_STATUS_CORREIOS_KEY, cacheStatus);
-
-    if (totalVisivel === 0) {
-        mostrarRastreiosAtualizadosTopbar();
-    }
 }
 
 function obterSituacaoLinha(linha) {
@@ -501,55 +522,6 @@ function obterDataStatusLinha(linha) {
     const codigo = normalizarCodigoRastreio(linha?.[1]);
     const status = obterStatusLocal(codigo);
     return dataStatusCorreios(status);
-}
-
-/* Último evento dos Correios: data legível + dias parado */
-const DIAS_ALERTA_PARADO = 5;
-
-function converterDataEventoCorreios(valor) {
-    if (!valor) return null;
-    const texto = String(valor).trim();
-
-    let m = texto.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2}))?/);
-    if (m) {
-        const [, ano, mes, dia, hora = "00", minuto = "00"] = m;
-        return new Date(+ano, +mes - 1, +dia, +hora, +minuto);
-    }
-
-    m = texto.match(/^(\d{2})[\/-](\d{2})[\/-](\d{4})(?:[\sT]+(\d{2}):(\d{2}))?/);
-    if (m) {
-        const [, dia, mes, ano, hora = "00", minuto = "00"] = m;
-        return new Date(+ano, +mes - 1, +dia, +hora, +minuto);
-    }
-
-    return null;
-}
-
-function obterUltimoEventoLinha(linha) {
-    const codigo = normalizarCodigoRastreio(linha?.[1]);
-    const status = obterStatusLocal(codigo);
-    const data = converterDataEventoCorreios(status?.data);
-
-    if (!data || isNaN(data.getTime())) return null;
-
-    const dataTexto = data.toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit"
-    });
-
-    const horaTexto = data.toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-
-    const dias = Math.floor(
-        (Date.now() - data.getTime()) / (24 * 60 * 60 * 1000)
-    );
-
-    return {
-        texto: `${dataTexto} às ${horaTexto}`,
-        dias: Math.max(0, dias)
-    };
 }
 
 function linhaAguardandoRetirada(linha) {
@@ -735,11 +707,12 @@ function definirStatusAtualizacaoTopbar(
     }
 }
 
-function iniciarProgressoCorreiosTopbar(total) {
+function iniciarProgressoCorreiosTopbar(total, textoAndamento = "Atualizando rastreios...") {
     progressoCorreiosTopbar = {
         total: Number(total) || 0,
         concluidos: 0,
-        erros: 0
+        erros: 0,
+        texto: textoAndamento
     };
 
     if (!total) {
@@ -754,7 +727,7 @@ function iniciarProgressoCorreiosTopbar(total) {
 
     definirStatusAtualizacaoTopbar(
         "atualizando",
-        "Atualizando rastreios...",
+        textoAndamento,
         `0 de ${total}`,
         0
     );
@@ -777,9 +750,14 @@ function registrarProgressoCorreiosTopbar(erro = false) {
             ? "Atualização concluída com avisos"
             : "Rastreios atualizados";
 
+        const hora = new Date().toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+
         const detalhe = erros > 0
-            ? `${concluidos} de ${total} • ${erros} com falha`
-            : `${concluidos} de ${total} • Atualizado agora`;
+            ? `${erros} de ${total} com falha • ${hora}`
+            : `Última verificação ${hora}`;
 
         definirStatusAtualizacaoTopbar(
             erros > 0 ? "erro" : "concluido",
@@ -792,7 +770,7 @@ function registrarProgressoCorreiosTopbar(erro = false) {
 
     definirStatusAtualizacaoTopbar(
         "atualizando",
-        "Atualizando rastreios...",
+        progressoCorreiosTopbar.texto || "Atualizando rastreios...",
         `${concluidos} de ${total} • ${percentual}%`,
         percentual
     );
@@ -3342,8 +3320,6 @@ function renderizar(lista) {
         const dataStatus =
             obterDataStatusLinha(l);
 
-        const ultimoEvento =
-            obterUltimoEventoLinha(l);
 
 
         let faixaHTML = "";
@@ -3584,21 +3560,6 @@ function renderizar(lista) {
                         ${situacaoTexto}
 
                     </span>
-
-                    ${
-                        situacao.includes("PENDENTE") && ultimoEvento
-                            ? `
-                                <div class="situacao-ultimo-evento">
-                                    Último evento: ${ultimoEvento.texto}
-                                </div>
-                                ${
-                                    ultimoEvento.dias >= DIAS_ALERTA_PARADO && !temAlertaRetirada
-                                        ? `<div class="selo-parado" title="Sem nova atualização dos Correios desde ${ultimoEvento.texto}">⚠ ${ultimoEvento.dias} dias sem movimentação</div>`
-                                        : ""
-                                }
-                              `
-                            : ""
-                    }
 
                 </div>
 

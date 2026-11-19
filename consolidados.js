@@ -98,7 +98,7 @@ function sellerBrand(r){const m=String(r.marca_vendedor||'').trim();return m&&m!
 // Vendedor no formato "V00100 - BEATRIZ POLITO" (só o código/nome quando faltar um deles).
 function sellerLabel(r){const code=String(r.codigo||'').trim().toUpperCase();const name=String(val(r,'vendedor')||'').trim();if(!code)return name||'—';if(!name||name.toUpperCase()===code)return code;return code+' - '+name}
 function summary(data,keys){const m=new Map();data.forEach(r=>{const labels=keys.map(k=>k==='setor'?sector(r):k==='tipo'?type(r):k==='marca_vendedor'?sellerBrand(r):k==='vendedor_codigo'?sellerLabel(r):val(r,k)||'—');const key=JSON.stringify(labels);const o=m.get(key)||{labels,q:0,orders:new Set(),records:0};o.q+=selectedQuantity(r);const order=orderKey(r);if(order)o.orders.add(order);o.records++;m.set(key,o)});return [...m.values()].sort((a,b)=>b.q-a.q)}
-function renderTables(d,total){if(active==='parcial'){renderParcialVendedoras(d);renderParcialDescricoes(d);return}if(active==='geral'){renderGeralTeste(d);return}}
+function renderTables(d,total){if(active==='parcial'){renderParcialVendedoras(d);renderParcialDescricoes(d);renderLateraisMarca(d);return}if(active==='geral'){renderGeralTeste(d);return}}
 function selectedKg(r){
  const unidade=String(r.unidade_medida||'').trim().toUpperCase();
  if(unidade!=='KG')return 0;
@@ -312,6 +312,35 @@ function ligarDetalheDescricao(el){
  });
  el.addEventListener('mousemove',e=>{if(tip.classList.contains('on'))posicionar(e)});
  el.addEventListener('mouseleave',()=>{tip.classList.remove('on')});
+}
+
+
+/* ---------- Cartões laterais das marcas (Relatório Parcial) ---------- */
+// Usam os filtros do topo, mas não o botão de marca: os dois cartões
+// ficam sempre preenchidos; a marca selecionada ganha destaque.
+function renderLateraisMarca(d){
+ const data=d.filter(r=>selectedQuantity(r)>0);
+ const totalGeral=data.reduce((s,r)=>s+selectedQuantity(r),0);
+ [['4K','lado4k'],['Luara','ladoLuara']].forEach(([marca,id])=>{
+  const el=$(id);if(!el)return;
+  const dm=data.filter(r=>brandKey(r)===marca);
+  const q=dm.reduce((s,r)=>s+selectedQuantity(r),0);
+  const ped=new Set(dm.map(orderKey).filter(Boolean)).size;
+  const vend=new Map();dm.forEach(r=>{const c=String(r.codigo||'').trim().toUpperCase()||'—';const v=vend.get(c)||{name:sellerName(r),q:0};v.q+=selectedQuantity(r);vend.set(c,v)});
+  const top=[...vend.values()].sort((a,b)=>b.q-a.q).slice(0,3);const maior=top.length?top[0].q:0;
+  const tipos=new Map();dm.forEach(r=>{const t=type(r);tipos.set(t,(tipos.get(t)||0)+selectedQuantity(r))});
+  const tipoTop=[...tipos.entries()].sort((a,b)=>b[1]-a[1])[0];
+  const share=totalGeral?100*q/totalGeral:0;const cls=brandClass(marca);
+  const apagado=brandFilter!=='todas'&&brandFilter!==marca;
+  el.className=`lado-marca ${cls}${apagado?' apagado':''}${brandFilter===marca?' destaque':''}`;
+  el.innerHTML=`
+   <div class="lm-cabeca"><span class="lm-logo">${marca==='4K'?'4K':'L'}</span><div><small>Marca</small><strong>${marca==='4K'?'Quatro K':'Luara'}</strong></div></div>
+   <div class="lm-numero"><strong>${fmt(q)}</strong><span>amostras enviadas</span></div>
+   <div class="lm-share"><div class="lm-share-barra"><span style="width:${share.toFixed(1)}%"></span></div><b>${pctLabel(q,totalGeral)}</b><small>do total</small></div>
+   <div class="lm-mini"><div><strong>${fmt(ped)}</strong><small>Pedidos</small></div><div><strong>${fmt(vend.size)}</strong><small>Vendedoras</small></div></div>
+   ${tipoTop?`<div class="lm-tipo"><small>Tipo mais enviado</small><span>${esc(tipoTop[0])}</span></div>`:''}
+   <div class="lm-top"><small>Destaques</small>${top.map((v,i)=>`<div class="lm-top-item"><span class="lm-pos">${i+1}</span><span class="lm-nome">${esc(v.name)}</span><b>${fmt(v.q)}</b><div class="lm-top-barra"><span style="width:${(maior?100*v.q/maior:0).toFixed(1)}%"></span></div></div>`).join('')||'<div class="lm-vazio">Sem envios no período</div>'}</div>`;
+ });
 }
 
 /* ---------- Relatório Geral (teste) ---------- */

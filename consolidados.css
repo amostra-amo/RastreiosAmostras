@@ -547,3 +547,23 @@ body[data-theme="dark"] .rel-planilha tbody tr:hover td{filter:brightness(1.15)}
 .rel-desc th:nth-child(5),.rel-desc td:nth-child(5){text-align:center!important}
 .rel-desc tfoot td:nth-child(3),.rel-desc tfoot td:nth-child(4),.rel-desc tfoot td:nth-child(5){text-align:center!important}
 .rel-planilha tfoot td:nth-child(3){font-weight:500}
+
+/* ============================================================
+   V22 — Parcial empilhado; Pedidos por vendedora; linha entre
+   setores mais visível (sem chamar atenção)
+   ============================================================ */
+@media(min-width:1280px){#parcial .tables{grid-template-columns:1fr}}
+
+/* Pesos: Pedidos e % normais, Quant. em negrito (corpo e total) */
+.rel-planilha td.c-ped,.rel-planilha td.c-pct{font-weight:500!important}
+.rel-planilha td.c-quant{font-weight:800!important}
+
+/* Separador de setores: linha fina na cor da marca */
+.rel-planilha tr.inicio-setor td{border-top:2px solid color-mix(in srgb,var(--text) 28%,transparent)}
+.rel-planilha tr.m-4k.inicio-setor td{border-top-color:color-mix(in srgb,var(--m4k) 45%,transparent)}
+.rel-planilha tr.m-luara.inicio-setor td{border-top-color:color-mix(in srgb,var(--mlu) 50%,transparent)}
+/* Rodapé: o "Total geral" ocupa 3 colunas, então a 3ª célula é a Quant. */
+.rel-planilha tfoot td{text-align:center!important}
+.rel-planilha tfoot td:first-child{text-align:left!important}
+.rel-planilha tfoot td.c-pct,.rel-planilha tfoot td.c-ped{color:var(--card)}
+.rel-planilha tfoot td:nth-child(3),.rel-planilha tfoot td:nth-child(2),.rel-planilha tfoot td:nth-child(4){text-align:center!important}

@@ -733,3 +733,10 @@ i.m-luara{background:var(--mlu)}
 body[data-theme="dark"]{
  --mlu:#FB7185;--mlu-strong:#FDA4AF;--mlu-soft:rgba(251,113,133,.15);--mlu-line:rgba(251,113,133,.38);--mlu-bar:#FB7185;
 }
+
+/* V27 — Dashboard sem os cartões laterais: conteúdo centralizado */
+.dash-layout{grid-template-columns:minmax(0,1100px)!important;justify-content:center}
+.dash-layout .dash-main{grid-column:1}
+.dash-main .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1100px){.dash-main .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.dash-main .kpis{grid-template-columns:1fr}}

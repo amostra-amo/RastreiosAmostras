@@ -357,7 +357,6 @@ function barraDividida(s,maior){
  return `<div class="dbar" title="4K: ${fmt(s.k)} · Luara: ${fmt(s.l)}${s.o?` · Sem marca: ${fmt(s.o)}`:''}"><span class="m-4k" style="width:${(100*s.k/base).toFixed(2)}%"></span><span class="m-luara" style="width:${(100*s.l/base).toFixed(2)}%"></span>${s.o?`<span class="m-outras" style="width:${(100*s.o/base).toFixed(2)}%"></span>`:''}</div>`;
 }
 function renderDashboard(d,total){
- renderLateraisMarca(d,['dash4k','dashLuara']);
  const data=d.filter(r=>selectedQuantity(r)>0);
  const q=r=>selectedQuantity(r);
 

@@ -647,3 +647,6 @@ body[data-theme="dark"] .rel-planilha tbody tr:hover td{filter:brightness(1.15)}
  #parcial .section-heading{max-width:1000px}
  .lado-marca{display:none}
 }
+
+/* V24 — abas centralizadas */
+#tabs{justify-content:center}

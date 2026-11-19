@@ -168,7 +168,7 @@ function renderSparklines(data){
 }
 
 function clientKey(r){const code=String(r.codigo_cliente||'').trim().toUpperCase();if(code)return 'COD:'+code;const name=norm(val(r,'cliente'));return name?'NOME:'+name:null}
-function render(){const d=filtered(),total=d.reduce((s,r)=>s+selectedQuantity(r),0),kg=d.reduce((s,r)=>s+selectedKg(r),0),metrica=mode(),orders=new Set(d.filter(r=>metrica==='pendente'?pendenciaOperacional(r):metrica==='faturada'?number(r.quantidade_faturada)>0:true).map(orderKey).filter(Boolean));$('kQtd').textContent=fmt(total);const kgTitle=document.querySelector('#kKg')?.closest('.kpi')?.querySelector('.kpi-top span');if(kgTitle)kgTitle.textContent=metrica==='pendente'?'Peso pendente':metrica==='faturada'?'Peso faturado':'Peso solicitado';$('kKg').textContent=hasKgColumn?fmt(kg)+' Kg':'—';$('kPed').textContent=fmt(orders.size);const clients=new Set(d.filter(r=>metrica==='pendente'?pendenciaOperacional(r):metrica==='faturada'?number(r.quantidade_faturada)>0:true).map(clientKey).filter(Boolean));$('kCli').textContent=fmt(clients.size);$('kQtdSub').textContent=({original:'Quantidade total',faturada:'Quantidade faturada',pendente:'Quantidade pendente'})[mode()];$('kKgSub').textContent=hasKgColumn?({original:'Kg',faturada:'Peso faturado (SD2, KG)',pendente:'Peso pendente (KG)'})[mode()]:'Peso não disponível';$('kPedSub').textContent=({original:'Quantidade total',faturada:'Pedidos com faturamento',pendente:'Pedidos com pendências'})[metrica];renderSparklines(d);if(!rows.length){showNotice('Carregando os dados do Protheus…');return}if(!d.length)showNotice('Nenhum registro encontrado para os filtros selecionados.');else $('notice').style.display='none';if(active!=='inicio'){destroyCharts();renderTables(d,total);return}if(typeof Chart==='undefined'){showNotice('Não foi possível carregar o Chart.js.');return}if(typeof ChartDataLabels!=='undefined'&&!Chart.registry.plugins.get('datalabels'))Chart.register(ChartDataLabels);
+function render(){const d=filtered(),total=d.reduce((s,r)=>s+selectedQuantity(r),0),kg=d.reduce((s,r)=>s+selectedKg(r),0),metrica=mode(),orders=new Set(d.filter(r=>metrica==='pendente'?pendenciaOperacional(r):metrica==='faturada'?number(r.quantidade_faturada)>0:true).map(orderKey).filter(Boolean));$('kQtd').textContent=fmt(total);const kgTitle=document.querySelector('#kKg')?.closest('.kpi')?.querySelector('.kpi-top span');if(kgTitle)kgTitle.textContent=metrica==='pendente'?'Peso pendente':metrica==='faturada'?'Peso faturado':'Peso solicitado';$('kKg').textContent=hasKgColumn?fmt(kg)+' Kg':'—';$('kPed').textContent=fmt(orders.size);const clients=new Set(d.filter(r=>metrica==='pendente'?pendenciaOperacional(r):metrica==='faturada'?number(r.quantidade_faturada)>0:true).map(clientKey).filter(Boolean));$('kCli').textContent=fmt(clients.size);$('kQtdSub').textContent=({original:'Quantidade total',faturada:'Quantidade faturada',pendente:'Quantidade pendente'})[mode()];$('kKgSub').textContent=hasKgColumn?({original:'Kg',faturada:'Peso faturado (SD2, KG)',pendente:'Peso pendente (KG)'})[mode()]:'Peso não disponível';$('kPedSub').textContent=({original:'Quantidade total',faturada:'Pedidos com faturamento',pendente:'Pedidos com pendências'})[metrica];renderSparklines(d);if(!rows.length){showNotice('Carregando os dados do Protheus…');return}if(!d.length)showNotice('Nenhum registro encontrado para os filtros selecionados.');else $('notice').style.display='none';if(active!=='inicio'){destroyCharts();renderTables(d,total);return}renderDashboard(d,total);return;if(typeof Chart==='undefined'){showNotice('Não foi possível carregar o Chart.js.');return}if(typeof ChartDataLabels!=='undefined'&&!Chart.registry.plugins.get('datalabels'))Chart.register(ChartDataLabels);
 const allSums=TYPES.map(t=>d.filter(r=>type(r)===t).reduce((s,r)=>s+selectedQuantity(r),0));
 // Só exibe nos gráficos os tipos com quantidade > 0 (ex.: PDV, Talão de vendas e
 // Não informado zerados somem). A cor de cada tipo continua a mesma (índice original).
@@ -318,10 +318,10 @@ function ligarDetalheDescricao(el){
 /* ---------- Cartões laterais das marcas (Relatório Parcial) ---------- */
 // Usam os filtros do topo, mas não o botão de marca: os dois cartões
 // ficam sempre preenchidos; a marca selecionada ganha destaque.
-function renderLateraisMarca(d){
+function renderLateraisMarca(d,ids=['lado4k','ladoLuara']){
  const data=d.filter(r=>selectedQuantity(r)>0);
  const totalGeral=data.reduce((s,r)=>s+selectedQuantity(r),0);
- [['4K','lado4k'],['Luara','ladoLuara']].forEach(([marca,id])=>{
+ [['4K',ids[0]],['Luara',ids[1]]].forEach(([marca,id])=>{
   const el=$(id);if(!el)return;
   const dm=data.filter(r=>brandKey(r)===marca);
   const q=dm.reduce((s,r)=>s+selectedQuantity(r),0);
@@ -341,6 +341,72 @@ function renderLateraisMarca(d){
    ${tipoTop?`<div class="lm-tipo"><small>Tipo mais enviado</small><span>${esc(tipoTop[0])}</span></div>`:''}
    <div class="lm-top"><small>Destaques</small>${top.map((v,i)=>`<div class="lm-top-item"><span class="lm-pos">${i+1}</span><span class="lm-nome">${esc(v.name)}</span><b>${fmt(v.q)}</b><div class="lm-top-barra"><span style="width:${(maior?100*v.q/maior:0).toFixed(1)}%"></span></div></div>`).join('')||'<div class="lm-vazio">Sem envios no período</div>'}</div>`;
  });
+}
+
+
+/* ============================================================
+   Dashboard Consolidado — layout do Relatório Parcial
+   Gráficos desenhados na própria página (sem biblioteca externa)
+   ============================================================ */
+function dividirMarcas(lista,valor){
+ let k=0,l=0,o=0;lista.forEach(r=>{const v=valor(r);const b=brandKey(r);if(b==='4K')k+=v;else if(b==='Luara')l+=v;else o+=v});
+ return {k,l,o,t:k+l+o};
+}
+function barraDividida(s,maior){
+ const base=maior||s.t||1;
+ return `<div class="dbar" title="4K: ${fmt(s.k)} · Luara: ${fmt(s.l)}${s.o?` · Sem marca: ${fmt(s.o)}`:''}"><span class="m-4k" style="width:${(100*s.k/base).toFixed(2)}%"></span><span class="m-luara" style="width:${(100*s.l/base).toFixed(2)}%"></span>${s.o?`<span class="m-outras" style="width:${(100*s.o/base).toFixed(2)}%"></span>`:''}</div>`;
+}
+function renderDashboard(d,total){
+ renderLateraisMarca(d,['dash4k','dashLuara']);
+ const data=d.filter(r=>selectedQuantity(r)>0);
+ const q=r=>selectedQuantity(r);
+
+ // KPIs: divisão 4K x Luara embaixo de cada número
+ const ped=new Map(),cli=new Map();
+ data.forEach(r=>{const o=orderKey(r);if(o&&!ped.has(o))ped.set(o,brandKey(r));const c=clientKey(r);if(c&&!cli.has(c))cli.set(c,brandKey(r))});
+ const contar=m=>{let k=0,l=0,o=0;m.forEach(b=>{if(b==='4K')k++;else if(b==='Luara')l++;else o++});return {k,l,o,t:k+l+o}};
+ const splits={kQtd:dividirMarcas(data,q),kKg:dividirMarcas(data,selectedKg),kPed:contar(ped),kCli:contar(cli)};
+ Object.entries(splits).forEach(([id,s])=>{
+  const info=$(id)?.closest('.kpi-card-info');if(!info)return;
+  let el=info.querySelector('.kpi-split');if(!el){el=document.createElement('div');el.className='kpi-split';info.append(el)}
+  const p=v=>s.t?Math.round(100*v/s.t):0;
+  el.innerHTML=`${barraDividida(s)}<div class="kpi-split-leg"><span><i class="m-4k"></i>4K ${p(s.k)}%</span><span><i class="m-luara"></i>Luara ${p(s.l)}%</span></div>`;
+ });
+
+ // Evolução: 12 meses até o último mês filtrado (ignora ano/mês)
+ const base=rows.filter(r=>rowMatchesItems(r)&&(!selections.setor.size||selections.setor.has(sector(r)))&&selectedQuantity(r)>0);
+ const chaveMes=r=>{const dt=parseDate(val(r,'data'));return dt?dt.getFullYear()*12+dt.getMonth():null};
+ const mesesFiltro=new Set(data.map(chaveMes).filter(v=>v!==null));
+ const fim=mesesFiltro.size?Math.max(...mesesFiltro):Math.max(...base.map(chaveMes).filter(v=>v!==null),0);
+ const meses=Array.from({length:12},(_,i)=>fim-11+i);
+ const porMes=new Map(meses.map(m=>[m,{k:0,l:0,o:0,t:0}]));
+ base.forEach(r=>{const m=porMes.get(chaveMes(r));if(!m)return;const v=q(r),b=brandKey(r);if(b==='4K')m.k+=v;else if(b==='Luara')m.l+=v;else m.o+=v;m.t+=v});
+ const maiorMes=Math.max(1,...[...porMes.values()].map(m=>m.t));
+ $('dashEvolucaoSub').textContent=`${MONTHS[meses[0]%12]}/${String(Math.floor(meses[0]/12)).slice(2)} a ${MONTHS[fim%12]}/${String(Math.floor(fim/12)).slice(2)} · mês filtrado em destaque`;
+ $('dashEvolucao').innerHTML=meses.map(m=>{const v=porMes.get(m);const sel=mesesFiltro.has(m);
+  return `<div class="dcol${sel?' sel':''}" title="${MONTHS[m%12]}/${Math.floor(m/12)} · 4K: ${fmt(v.k)} · Luara: ${fmt(v.l)} · Total: ${fmt(v.t)}"><b>${v.t?fmt(v.t):''}</b><div class="dcol-pilha" style="height:${(100*v.t/maiorMes).toFixed(1)}%">${v.l?`<span class="m-luara" style="flex:${v.l}"></span>`:''}${v.k?`<span class="m-4k" style="flex:${v.k}"></span>`:''}${v.o?`<span class="m-outras" style="flex:${v.o}"></span>`:''}</div><small>${MONTHS[m%12]}</small></div>`}).join('');
+
+ // Tipos de amostra e setores: barras divididas por marca
+ const lista=(chave,ordem)=>{
+  const m=new Map();data.forEach(r=>{const c=chave(r);const o=m.get(c)||{c,k:0,l:0,o:0,t:0};const v=q(r),b=brandKey(r);if(b==='4K')o.k+=v;else if(b==='Luara')o.l+=v;else o.o+=v;o.t+=v;m.set(c,o)});
+  const itens=[...m.values()].filter(x=>x.t>0).sort(ordem||((a,b)=>b.t-a.t));const maior=Math.max(1,...itens.map(x=>x.t));
+  return itens.map(x=>`<div class="dlin"><span class="dlin-nome">${esc(x.c)}</span>${barraDividida(x,maior)}<b>${fmt(x.t)}</b><small>${pctLabel(x.t,total)}</small></div>`).join('')||'<div class="vazio">Sem envios no período</div>';
+ };
+ $('dashTipos').innerHTML=lista(type);
+ $('dashSetores').innerHTML=lista(sector,(a,b)=>(ORDEM_SETOR[a.c]??9)-(ORDEM_SETOR[b.c]??9));
+
+ // Top 15 artigos (com o detalhe das vendedoras ao passar o mouse)
+ const art=new Map();descDetalhe=new Map();
+ data.forEach(r=>{
+  const k=String(val(r,'descr')||'Não informado').trim()||'Não informado';const v=q(r),b=brandKey(r);
+  const o=art.get(k)||{k,c:k,kk:0,l:0,o:0,t:0};if(b==='4K')o.kk+=v;else if(b==='Luara')o.l+=v;else o.o+=v;o.t+=v;art.set(k,o);
+  if(!descDetalhe.has(k))descDetalhe.set(k,new Map());const vm=descDetalhe.get(k);const code=String(r.codigo||'').trim().toUpperCase()||'—';
+  const vv=vm.get(code)||{code,name:sellerName(r),b,q:0};vv.q+=v;vm.set(code,vv);
+ });
+ const top=[...art.values()].sort((a,b)=>b.t-a.t).slice(0,15);const maiorArt=top.length?top[0].t:1;
+ const el=$('dashArtigos');
+ el.innerHTML=`<tbody>${top.map((x,i)=>`<tr data-desc="${esc(x.k)}"><td class="c-rank">${i+1}</td><td class="da-nome">${esc(x.k)}</td><td class="da-barra">${barraDividida({k:x.kk,l:x.l,o:x.o,t:x.t},maiorArt)}</td><td class="c-num da-q">${fmt(x.t)}</td><td class="c-num da-p">${pctLabel(x.t,total)}</td></tr>`).join('')||'<tr><td class="vazio">Sem envios no período</td></tr>'}</tbody>`;
+ ligarDetalheDescricao(el);
 }
 
 /* ---------- Relatório Geral (teste) ---------- */

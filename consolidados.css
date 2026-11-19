@@ -650,3 +650,76 @@ body[data-theme="dark"] .rel-planilha tbody tr:hover td{filter:brightness(1.15)}
 
 /* V24 — abas centralizadas */
 #tabs{justify-content:center}
+
+/* ============================================================
+   V25 — Dashboard no layout do Relatório Parcial
+   ============================================================ */
+.dash-layout{margin-top:4px}
+.dash-main{grid-column:2;min-width:0;display:flex;flex-direction:column;gap:14px}
+#dash4k{grid-column:1;justify-self:end}
+#dashLuara{grid-column:3;justify-self:start}
+@media(max-width:1279px){.dash-main{grid-column:1}}
+.dash-main .kpis{margin:0;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(min-width:1600px){.dash-main .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.dash-main .kpi{min-height:0!important}
+
+/* Divisão 4K x Luara nos indicadores */
+.kpi-split{margin-top:9px}
+.kpi-split .dbar{height:6px}
+.kpi-split-leg{display:flex;gap:12px;margin-top:5px;font-size:10.5px;font-weight:700;color:var(--muted)}
+.kpi-split-leg i,.dash-legenda i{display:inline-block;width:8px;height:8px;margin-right:5px;border-radius:50%;vertical-align:middle}
+i.m-4k{background:var(--m4k)}
+i.m-luara{background:var(--mlu)}
+
+/* Barra dividida por marca */
+.dbar{display:flex;width:100%;height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.dbar span{display:block;height:100%}
+.dbar span.m-4k{background:linear-gradient(90deg,var(--m4k),#60A5FA)}
+.dbar span.m-luara{background:linear-gradient(90deg,var(--mlu),var(--mlu-bar))}
+.dbar span.m-outras{background:var(--mout)}
+
+/* Cartões do dashboard */
+.dash-card{padding:16px 18px 14px}
+.dash-titulo{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.dash-titulo h3{margin:0;font-size:15px}
+.dash-titulo span{font-size:12px;color:var(--muted)}
+.dash-legenda{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-weight:700}
+.dash-legenda i:not(:first-child){margin-left:10px}
+
+/* Evolução mensal: colunas empilhadas 4K + Luara */
+.dash-evolucao{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:8px;align-items:end;height:230px;padding-top:6px}
+.dcol{height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;opacity:.55;transition:opacity .15s}
+.dcol:hover,.dcol.sel{opacity:1}
+.dcol b{font-size:11px;font-variant-numeric:tabular-nums}
+.dcol-pilha{width:min(38px,80%);min-height:2px;display:flex;flex-direction:column;border-radius:8px 8px 3px 3px;overflow:hidden;background:var(--soft)}
+.dcol-pilha span{display:block;min-height:2px}
+.dcol-pilha span.m-4k{background:linear-gradient(180deg,#60A5FA,var(--m4k))}
+.dcol-pilha span.m-luara{background:linear-gradient(180deg,var(--mlu-bar),var(--mlu))}
+.dcol-pilha span.m-outras{background:var(--mout)}
+.dcol small{font-size:11px;font-weight:700;color:var(--muted)}
+.dcol.sel small{color:var(--text)}
+.dcol.sel .dcol-pilha{box-shadow:0 0 0 2px var(--card),0 0 0 4px color-mix(in srgb,var(--text) 25%,transparent)}
+
+/* Tipos e setores */
+.dash-grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media(max-width:900px){.dash-grid2{grid-template-columns:1fr}}
+.dash-lista{display:flex;flex-direction:column;gap:9px}
+.dlin{display:grid;grid-template-columns:minmax(90px,130px) 1fr 44px 46px;align-items:center;gap:10px;font-size:12.5px}
+.dlin-nome{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dlin b{text-align:right;font-variant-numeric:tabular-nums}
+.dlin small{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* Top 15 artigos */
+.dash-artigos{width:100%;border-collapse:collapse;font-size:12.5px}
+.dash-artigos td{padding:7px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.dash-artigos tr:last-child td{border-bottom:0}
+.dash-artigos tbody tr:hover td{background:var(--soft)}
+.dash-artigos .da-nome{font-weight:650;white-space:normal;line-height:1.3;width:38%}
+.dash-artigos .da-barra{width:42%}
+.dash-artigos .da-q{font-weight:800;width:56px}
+.dash-artigos .da-p{color:var(--muted);width:56px}
+/* Indicadores sem o mini gráfico (a evolução mensal fica logo abaixo) */
+.dash-main .kpi-card-layout{grid-template-columns:1fr!important;min-height:0}
+.dash-main .kpi-spark{display:none!important}
+.dash-main .kpi-card-info{padding:14px 16px 13px!important}
+.dash-main .kpi-split .dbar{max-width:none}

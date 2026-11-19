@@ -210,6 +210,7 @@ function pctLabel(v,total){return pct(v,total).toLocaleString('pt-BR',{minimumFr
 const PCT_TOTAL='100,0%';
 function barCell(v,total,classe){const p=Math.min(100,pct(v,total));return `<td class="c-bar"><div class="pbar ${classe||''}"><span style="width:${p.toFixed(2)}%"></span></div><b>${pctLabel(v,total)}</b></td>`}
 function sellerName(r){const name=String(val(r,'vendedor')||'').trim();const code=String(r.codigo||'').trim().toUpperCase();return name&&name.toUpperCase()!==code?name:code||'—'}
+function clienteLabel(r){const code=String(r.codigo_cliente||'').trim();const name=String(val(r,'cliente')||'').trim();if(!code)return name||'—';if(!name||name===code)return code;return code+' - '+name}
 function repLabel(r){const code=String(r.codigo_representante||'').trim();const name=String(r.rep||'').trim();if(!code)return name||'—';if(!name||name===code)return code;return code+' - '+name}
 
 function setupBrandToggles(){
@@ -260,15 +261,14 @@ function renderParcialDescricoes(d){
   const v=vm.get(code)||{code,name:sellerName(r),b:brandKey(r),q:0};v.q+=q;vm.set(code,v);
  });
  const lista=[...m.values()].sort((a,b)=>b.q-a.q||a.k.localeCompare(b.k,'pt-BR'));
- const maior=lista.length?lista[0].q:0;
+
  const totPed=new Set(data.map(orderKey).filter(Boolean)).size;
- const cor=brandFilter==='todas'?'m-mix':brandClass(brandFilter);
  // A barra é proporcional ao artigo com mais quantidade (fica mais preenchida);
  // o número continua sendo a participação no total.
- const body=lista.map((x,i)=>`<tr data-desc="${esc(x.k)}"><td class="c-rank">${i+1}</td><td><span class="desc-nome">${esc(x.k)}</span></td><td class="c-num">${fmt(x.ped.size)}</td><td class="c-num">${fmt(x.q)}</td><td class="c-bar"><div class="pbar ${cor}"><span style="width:${(maior?Math.max(3,100*x.q/maior):0).toFixed(1)}%"></span></div><b>${pctLabel(x.q,total)}</b></td></tr>`).join('')
+ const body=lista.map((x,i)=>`<tr data-desc="${esc(x.k)}"><td class="c-rank">${i+1}</td><td><span class="desc-nome">${esc(x.k)}</span></td><td class="c-num">${fmt(x.ped.size)}</td><td class="c-num c-quant">${fmt(x.q)}</td><td class="c-num c-pct">${pctLabel(x.q,total)}</td></tr>`).join('')
   ||`<tr><td colspan="5" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
  el.className='rel-desc';
- el.innerHTML=`<thead><tr><th class="c-rank">#</th><th>Artigo</th><th class="c-num">Pedidos</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td></td><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''} · ${fmt(lista.length)} artigos</td><td class="c-num">${fmt(totPed)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>${PCT_TOTAL}</b></td></tr></tfoot>`;
+ el.innerHTML=`<thead><tr><th class="c-rank">#</th><th>Artigo</th><th class="c-num">Pedidos</th><th class="c-num">Quant.</th><th class="c-num">%</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td></td><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''} · ${fmt(lista.length)} artigos</td><td class="c-num">${fmt(totPed)}</td><td class="c-num">${fmt(total)}</td><td class="c-num">${PCT_TOTAL}</td></tr></tfoot>`;
  ligarDetalheDescricao(el);
  igualarAlturaArtigos(el);
 }
@@ -330,7 +330,7 @@ function renderGeralTeste(d){
  const m=new Map();
  data.forEach(r=>{
   const b=brandKey(r);const dt=parseDate(val(r,'data'));
-  const linha={iso:dataISO(dt),data:dt?dt.toLocaleDateString('pt-BR'):'—',marca:b==='Outras'?'Sem marca':b,cls:brandClass(b),code:String(r.codigo||'').trim().toUpperCase(),vend:sellerLabel(r),mat:String(val(r,'descr')||'—').trim(),tipo:type(r),rep:repLabel(r),cli:String(val(r,'cliente')||'—').trim(),q:0};
+  const linha={iso:dataISO(dt),data:dt?dt.toLocaleDateString('pt-BR'):'—',marca:b==='Outras'?'Sem marca':b,cls:brandClass(b),code:String(r.codigo||'').trim().toUpperCase(),vend:sellerLabel(r),mat:String(val(r,'descr')||'—').trim(),tipo:type(r),rep:repLabel(r),cli:clienteLabel(r),q:0};
   const k=[linha.iso,linha.marca,linha.vend,linha.mat,linha.tipo,linha.rep,linha.cli].join('\u0001');
   const o=m.get(k)||linha;o.q+=selectedQuantity(r);m.set(k,o);
  });

@@ -534,3 +534,16 @@ body[data-theme="dark"] .rel-planilha tbody tr:hover td{filter:brightness(1.15)}
 .rel-planilha td:nth-child(4),.rel-planilha td:nth-child(5){font-weight:800}
 .rel-planilha .c-pct{color:var(--text)}
 .rel-planilha .marca-pill{justify-content:center}
+
+/* ============================================================
+   V21 — % sem negrito; Envio por Artigos com QUANT. e %
+   ============================================================ */
+.rel-planilha td:nth-child(5){font-weight:500}
+.rel-planilha .c-pct{color:var(--text)}
+.rel-desc .c-quant{font-weight:800}
+.rel-desc .c-pct{font-weight:500}
+.rel-desc th:nth-child(3),.rel-desc td:nth-child(3),
+.rel-desc th:nth-child(4),.rel-desc td:nth-child(4),
+.rel-desc th:nth-child(5),.rel-desc td:nth-child(5){text-align:center!important}
+.rel-desc tfoot td:nth-child(3),.rel-desc tfoot td:nth-child(4),.rel-desc tfoot td:nth-child(5){text-align:center!important}
+.rel-planilha tfoot td:nth-child(3){font-weight:500}

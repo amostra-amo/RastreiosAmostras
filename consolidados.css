@@ -463,3 +463,44 @@ body[data-theme="dark"] .rel-planilha tbody tr:hover td{filter:brightness(1.15)}
 .rel-geral td:nth-child(6){min-width:150px}
 .rel-geral td:nth-child(7){min-width:190px}
 .rel-geral td:nth-child(4){min-width:190px}
+
+/* ============================================================
+   V18 — Parcial mais compacto, separador de setores e
+   mini gráfico mensal por vendedora
+   ============================================================ */
+/* As duas tabelas lado a lado em telas largas */
+@media(min-width:1280px){
+ #parcial .tables{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);align-items:start}
+}
+#parcial article{padding:16px 16px 14px}
+#parcial article h3{margin-bottom:12px;font-size:15px}
+#parcial .tablewrap{max-height:none}
+
+/* Resumo por marca: colunas justas */
+.rel-planilha{width:100%}
+.rel-planilha th,.rel-planilha td{white-space:nowrap}
+.rel-planilha td{padding:5px 10px!important}
+.rel-planilha thead th{padding:9px 10px}
+.rel-planilha .c-setor{color:var(--muted);font-weight:600}
+.rel-planilha .vend-cod-mini{margin-left:6px}
+.rel-planilha .c-mini{width:1%;text-align:center}
+.rel-planilha thead th.c-mini{font-size:10px;letter-spacing:.3px}
+
+/* Linha discreta entre departamentos */
+.rel-planilha tr.inicio-setor td{border-top:1px solid color-mix(in srgb,var(--text) 30%,transparent)}
+
+/* Mini barras mensais */
+.mini-barras{display:block;margin:auto;overflow:visible}
+.mini-barras rect{fill:var(--mout)}
+.mini-barras.m-4k rect{fill:var(--m4k)}
+.mini-barras.m-luara rect{fill:var(--mlu)}
+.mini-barras rect.zero{fill:color-mix(in srgb,var(--text) 18%,transparent)}
+.mini-barras rect:last-child{opacity:1}
+.mini-barras rect:not(:last-child){opacity:.72}
+
+/* Resumo por descrição mais compacto ao lado */
+.rel-desc td{padding:7px 10px}
+.rel-desc th{padding:9px 10px}
+.rel-desc .c-bar{width:180px;min-width:150px}
+.rel-desc .c-rank{width:34px}
+.rel-desc .desc-nome{white-space:normal;line-height:1.3}

@@ -197,7 +197,7 @@ makeChart('col',{
    Relatório Geral (teste)
    ============================================================ */
 const ORDEM_MARCA={'4K':0,'Luara':1,'Outras':2};
-const ORDEM_SETOR={'Supervisão':0,'Televendas':1,'Loja Física':2,'Loja SP':3,'Não classificado':4};
+const ORDEM_SETOR={'Supervisão':0,'Televendas':1,'Loja SP':2,'Loja Física':3,'Não classificado':4};
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 let brandFilter=(()=>{try{return localStorage.getItem('consolidados-marca')||'todas'}catch{return 'todas'}})();
 
@@ -205,7 +205,9 @@ function brandKey(r){const m=norm(sellerBrand(r));return m==='luara'?'Luara':m==
 function brandClass(b){return b==='4K'?'m-4k':b==='Luara'?'m-luara':'m-outras'}
 function byBrand(d){return brandFilter==='todas'?d:d.filter(r=>brandKey(r)===brandFilter)}
 function pct(v,total){return total?100*v/total:0}
-function pctLabel(v,total){const p=pct(v,total);return (p>0&&p<1?p.toLocaleString('pt-BR',{maximumFractionDigits:1}):fmt(p))+'%'}
+// Sempre no formato 0,0%
+function pctLabel(v,total){return pct(v,total).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'}
+const PCT_TOTAL='100,0%';
 function barCell(v,total,classe){const p=Math.min(100,pct(v,total));return `<td class="c-bar"><div class="pbar ${classe||''}"><span style="width:${p.toFixed(2)}%"></span></div><b>${pctLabel(v,total)}</b></td>`}
 function sellerName(r){const name=String(val(r,'vendedor')||'').trim();const code=String(r.codigo||'').trim().toUpperCase();return name&&name.toUpperCase()!==code?name:code||'—'}
 function repLabel(r){const code=String(r.codigo_representante||'').trim();const name=String(r.rep||'').trim();if(!code)return name||'—';if(!name||name===code)return code;return code+' - '+name}
@@ -221,25 +223,43 @@ function setupBrandToggles(){
 }
 
 /* ---------- Resumo por marca, setor e vendedora (formato planilha) ---------- */
+// Mini gráfico de barras: quantidade dos últimos meses do período filtrado
+function miniBarras(valores,classe,rotulos){
+ const n=valores.length;if(!n)return '';
+ const maior=Math.max(...valores)||1,w=7,gap=3,h=22,largura=n*(w+gap)-gap;
+ const barras=valores.map((v,i)=>{const alt=v?Math.max(2,Math.round(h*v/maior)):1;return `<rect x="${i*(w+gap)}" y="${h-alt}" width="${w}" height="${alt}" rx="1.5"${v?'':' class="zero"'}><title>${esc(rotulos[i])}: ${fmt(v)}</title></rect>`}).join('');
+ return `<svg class="mini-barras ${classe}" viewBox="0 0 ${largura} ${h}" width="${largura}" height="${h}" role="img" aria-label="Quantidade por mês">${barras}</svg>`;
+}
+function mesesRecentes(data,qtd){
+ const chaves=[...new Set(data.map(r=>{const dt=parseDate(val(r,'data'));return dt?dt.getFullYear()*12+dt.getMonth():null}).filter(v=>v!==null))].sort((a,b)=>a-b);
+ if(!chaves.length)return [];
+ const ultimo=chaves[chaves.length-1];
+ return Array.from({length:qtd},(_,i)=>ultimo-(qtd-1-i));
+}
 function renderParcialVendedoras(d){
  const el=$('tParcial1');const data=byBrand(d).filter(r=>selectedQuantity(r)>0);
  const total=data.reduce((s,r)=>s+selectedQuantity(r),0);
+ const meses=mesesRecentes(data,6);const idx=new Map(meses.map((k,i)=>[k,i]));
+ const rotulos=meses.map(k=>MONTHS[k%12]+'/'+String(Math.floor(k/12)).slice(2));
  const m=new Map();
  data.forEach(r=>{
   const b=brandKey(r),st=sector(r),code=String(r.codigo||'').trim().toUpperCase()||'—';
-  const k=b+'\u0001'+st+'\u0001'+code;
-  const o=m.get(k)||{b,st,code,name:sellerName(r),q:0};o.q+=selectedQuantity(r);m.set(k,o);
+  const k=b+'\u0001'+st+'\u0001'+code;const q=selectedQuantity(r);
+  const o=m.get(k)||{b,st,code,name:sellerName(r),q:0,mes:new Array(meses.length).fill(0)};
+  o.q+=q;const dt=parseDate(val(r,'data'));const pos=dt?idx.get(dt.getFullYear()*12+dt.getMonth()):undefined;if(pos!==undefined)o.mes[pos]+=q;
+  m.set(k,o);
  });
- // Ordem: marca > setor > maior quantidade (como na planilha)
+ // Ordem: marca > setor (Supervisão, Televendas, Loja, Loja Física) > maior quantidade
  const linhas=[...m.values()].sort((a,b)=>(ORDEM_MARCA[a.b]??9)-(ORDEM_MARCA[b.b]??9)||(ORDEM_SETOR[a.st]??9)-(ORDEM_SETOR[b.st]??9)||b.q-a.q||a.name.localeCompare(b.name,'pt-BR'));
- let anterior='';
+ let marcaAnt='',setorAnt='';
  const body=linhas.map(l=>{
-  const cls=brandClass(l.b);const inicioMarca=l.b!==anterior;anterior=l.b;
-  return `<tr class="${cls}${inicioMarca?' inicio-marca':''}"><td><span class="marca-pill ${cls}">${esc(l.b==='Outras'?'Sem marca':l.b)}</span></td><td>${esc(l.st)}</td><td><span class="vend-nome" title="${esc(l.code)}">${esc(l.name)}</span><span class="vend-cod-mini">${esc(l.code)}</span></td><td class="c-num">${fmt(l.q)}</td><td class="c-num c-pct">${pctLabel(l.q,total)}</td></tr>`;
- }).join('')||`<tr><td colspan="5" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
+  const cls=brandClass(l.b);const novaMarca=l.b!==marcaAnt;const novoSetor=!novaMarca&&l.st!==setorAnt;marcaAnt=l.b;setorAnt=l.st;
+  return `<tr class="${cls}${novaMarca?' inicio-marca':''}${novoSetor?' inicio-setor':''}"><td><span class="marca-pill ${cls}">${esc(l.b==='Outras'?'Sem marca':l.b)}</span></td><td class="c-setor">${esc(l.st)}</td><td><span class="vend-nome" title="${esc(l.code)}">${esc(l.name)}</span><span class="vend-cod-mini">${esc(l.code)}</span></td><td class="c-mini">${miniBarras(l.mes,cls,rotulos)}</td><td class="c-num">${fmt(l.q)}</td><td class="c-num c-pct">${pctLabel(l.q,total)}</td></tr>`;
+ }).join('')||`<tr><td colspan="6" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
  el.className='rel-parcial rel-planilha';
  el.closest('.tablewrap')?.classList.add('sem-scroll');
- el.innerHTML=`<thead><tr><th>Marca</th><th>Setor</th><th>Vendedora</th><th class="c-num">Quant.</th><th class="c-num">%</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="3">Total geral${brandFilter!=='todas'?' · '+esc(brandFilter):''}</td><td class="c-num">${fmt(total)}</td><td class="c-num">100%</td></tr></tfoot>`;
+ const periodo=rotulos.length?`${rotulos[0]} a ${rotulos[rotulos.length-1]}`:'';
+ el.innerHTML=`<thead><tr><th>Marca</th><th>Setor</th><th>Vendedora</th><th class="c-mini" title="Quantidade por mês${periodo?' ('+periodo+')':''}">Últimos 6 meses</th><th class="c-num">Quant.</th><th class="c-num">%</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="4">Total geral${brandFilter!=='todas'?' · '+esc(brandFilter):''}</td><td class="c-num">${fmt(total)}</td><td class="c-num">${PCT_TOTAL}</td></tr></tfoot>`;
 }
 
 /* ---------- Resumo por descrição ---------- */
@@ -264,7 +284,7 @@ function renderParcialDescricoes(d){
  const body=lista.map((x,i)=>`<tr data-desc="${esc(x.k)}"><td class="c-rank">${i+1}</td><td><span class="desc-nome">${esc(x.k)}</span></td><td class="c-num">${fmt(x.reg)}</td><td class="c-num">${fmt(x.q)}</td><td class="c-bar"><div class="pbar ${cor}"><span style="width:${(maior?Math.max(3,100*x.q/maior):0).toFixed(1)}%"></span></div><b>${pctLabel(x.q,total)}</b></td></tr>`).join('')
   ||`<tr><td colspan="5" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
  el.className='rel-desc';
- el.innerHTML=`<thead><tr><th class="c-rank">#</th><th>Descrição</th><th class="c-num">Registros</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td></td><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''} · ${fmt(lista.length)} descrições</td><td class="c-num">${fmt(totReg)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>100%</b></td></tr></tfoot>`;
+ el.innerHTML=`<thead><tr><th class="c-rank">#</th><th>Descrição</th><th class="c-num">Registros</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td></td><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''} · ${fmt(lista.length)} descrições</td><td class="c-num">${fmt(totReg)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>${PCT_TOTAL}</b></td></tr></tfoot>`;
  ligarDetalheDescricao(el);
 }
 

@@ -246,8 +246,13 @@ function renderParcialVendedoras(d){
   const b=brandKey(r),st=sector(r),code=String(r.codigo||'').trim().toUpperCase()||'—';
   const k=b+'\u0001'+st+'\u0001'+code;const q=selectedQuantity(r);
   const o=m.get(k)||{b,st,code,name:sellerName(r),q:0,mes:new Array(meses.length).fill(0)};
-  o.q+=q;const dt=parseDate(val(r,'data'));const pos=dt?idx.get(dt.getFullYear()*12+dt.getMonth()):undefined;if(pos!==undefined)o.mes[pos]+=q;
-  m.set(k,o);
+  o.q+=q;m.set(k,o);
+ });
+ // Mini gráfico: os 6 meses até o último mês filtrado, ignorando o filtro
+ // de ano/mês (com "Out" selecionado, mostra Mai a Out).
+ rows.filter(r=>rowMatchesItems(r)&&(!selections.setor.size||selections.setor.has(sector(r)))&&(brandFilter==='todas'||brandKey(r)===brandFilter)).forEach(r=>{
+  const dt=parseDate(val(r,'data'));if(!dt)return;const pos=idx.get(dt.getFullYear()*12+dt.getMonth());if(pos===undefined)return;
+  const o=m.get(brandKey(r)+'\u0001'+sector(r)+'\u0001'+(String(r.codigo||'').trim().toUpperCase()||'—'));if(o)o.mes[pos]+=selectedQuantity(r);
  });
  // Ordem: marca > setor (Supervisão, Televendas, Loja, Loja Física) > maior quantidade
  const linhas=[...m.values()].sort((a,b)=>(ORDEM_MARCA[a.b]??9)-(ORDEM_MARCA[b.b]??9)||(ORDEM_SETOR[a.st]??9)-(ORDEM_SETOR[b.st]??9)||b.q-a.q||a.name.localeCompare(b.name,'pt-BR'));
@@ -286,6 +291,19 @@ function renderParcialDescricoes(d){
  el.className='rel-desc';
  el.innerHTML=`<thead><tr><th class="c-rank">#</th><th>Descrição</th><th class="c-num">Registros</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td></td><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''} · ${fmt(lista.length)} descrições</td><td class="c-num">${fmt(totReg)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>${PCT_TOTAL}</b></td></tr></tfoot>`;
  ligarDetalheDescricao(el);
+ limitarLinhasVisiveis(el,30);
+}
+// Mostra até N linhas; acima disso a tabela rola (cabeçalho e total ficam fixos)
+function limitarLinhasVisiveis(el,n){
+ const wrap=el.closest('.tablewrap');if(!wrap)return;
+ wrap.classList.add('limite-linhas');wrap.style.maxHeight='';
+ requestAnimationFrame(()=>{
+  const linhas=el.tBodies[0]?.rows||[];
+  if(linhas.length<=n){wrap.style.maxHeight='none';return}
+  const cab=el.tHead?.offsetHeight||0,rod=el.tFoot?.offsetHeight||0;
+  let alt=0;for(let i=0;i<n;i++)alt+=linhas[i].offsetHeight;
+  wrap.style.maxHeight=(cab+alt+rod+2)+'px';
+ });
 }
 
 function ligarDetalheDescricao(el){
@@ -309,10 +327,10 @@ function ligarDetalheDescricao(el){
 
 /* ---------- Relatório Geral (teste) ---------- */
 const GERAL_COLUNAS=[
- {id:'data',titulo:'Data',data:true},{id:'marca',titulo:'Marca'},{id:'vend',titulo:'Cód. Vendedora + Nome'},{id:'mat',titulo:'Tipo de material'},
- {id:'tipo',titulo:'Tipo de amostra'},{id:'rep',titulo:'Cód. Representante + Nome'},{id:'cli',titulo:'Nome do cliente'},{id:'q',titulo:'Quantidade enviada',num:true}
+ {id:'data',titulo:'Data'},{id:'marca',titulo:'Marca'},{id:'vend',titulo:'Vendedores'},{id:'mat',titulo:'Descrição'},
+ {id:'tipo',titulo:'Tipo de Amostra'},{id:'rep',titulo:'Representantes'},{id:'cli',titulo:'Clientes'},{id:'q',titulo:'Qtd. Envios',num:true}
 ];
-const geralFiltros={};let geralLinhas=[];let geralDe='',geralAte='';const GERAL_LIMITE=3000;
+let geralLinhas=[];let geralBusca='';const GERAL_LIMITE=3000;
 function dataISO(dt){return dt?dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'):''}
 function renderGeralTeste(d){
  const data=byBrand(d).filter(r=>selectedQuantity(r)>0);
@@ -323,27 +341,25 @@ function renderGeralTeste(d){
   const k=[linha.iso,linha.marca,linha.vend,linha.mat,linha.tipo,linha.rep,linha.cli].join('\u0001');
   const o=m.get(k)||linha;o.q+=selectedQuantity(r);m.set(k,o);
  });
- // Mais recente primeiro; no mesmo dia, marca > vendedora > material
+ // Mais recente primeiro; no mesmo dia, marca > vendedora > descrição
  geralLinhas=[...m.values()].sort((a,b)=>b.iso.localeCompare(a.iso)||(ORDEM_MARCA[a.marca]??9)-(ORDEM_MARCA[b.marca]??9)||a.code.localeCompare(b.code,'pt-BR',{numeric:true})||a.mat.localeCompare(b.mat,'pt-BR')||a.cli.localeCompare(b.cli,'pt-BR'));
+ geralLinhas.forEach(l=>{l.busca=norm([l.data,l.marca,l.vend,l.mat,l.tipo,l.rep,l.cli].join(' '))});
  const el=$('tGeral');
- if(!el.querySelector('thead')||!el.querySelector('input[data-de]')){
-  el.innerHTML=`<thead><tr>${GERAL_COLUNAS.map(c=>`<th class="${c.num?'c-num':''}">${esc(c.titulo)}</th>`).join('')}</tr><tr class="filtros">${GERAL_COLUNAS.map(c=>c.num?'<th></th>':c.data?`<th class="f-data"><input type="date" data-de aria-label="Data inicial" title="De"><input type="date" data-ate aria-label="Data final" title="Até"></th>`:`<th><input type="search" data-col="${c.id}" placeholder="Filtrar…" aria-label="Filtrar ${esc(c.titulo)}"></th>`).join('')}</tr></thead><tbody></tbody><tfoot></tfoot>`;
-  let t;const head=el.querySelector('thead');
-  head.addEventListener('input',e=>{const inp=e.target;
-   if(inp.matches('input[data-col]'))geralFiltros[inp.dataset.col]=norm(inp.value);
-   else if(inp.matches('input[data-de]'))geralDe=inp.value;
-   else if(inp.matches('input[data-ate]'))geralAte=inp.value;
-   else return;
-   clearTimeout(t);t=setTimeout(pintarGeral,150)});
+ if(!el.querySelector('thead')||el.querySelector('tr.filtros')){
+  el.innerHTML=`<thead><tr>${GERAL_COLUNAS.map(c=>`<th class="${c.num?'c-num':''}">${esc(c.titulo)}</th>`).join('')}</tr></thead><tbody></tbody><tfoot></tfoot>`;
  }
+ const busca=$('geralBusca');
+ if(busca&&!busca.dataset.ligado){busca.dataset.ligado='1';let t;busca.addEventListener('input',()=>{geralBusca=norm(busca.value);clearTimeout(t);t=setTimeout(pintarGeral,150)})}
  pintarGeral();
 }
 function pintarGeral(){
- const el=$('tGeral');const ativos=Object.entries(geralFiltros).filter(([,v])=>v);
- const visiveis=geralLinhas.filter(l=>(!geralDe||l.iso>=geralDe)&&(!geralAte||l.iso<=geralAte)&&ativos.every(([c,v])=>norm(l[c]).includes(v)));
+ const el=$('tGeral');
+ // Busca por todas as palavras digitadas, em qualquer coluna
+ const termos=geralBusca?geralBusca.match(/[a-z0-9]+/g)||[]:[];
+ const visiveis=termos.length?geralLinhas.filter(l=>termos.every(t=>l.busca.includes(t))):geralLinhas;
  const total=visiveis.reduce((s,l)=>s+l.q,0);
- el.querySelector('tbody').innerHTML=visiveis.slice(0,GERAL_LIMITE).map(l=>`<tr><td class="c-data">${esc(l.data)}</td><td><span class="marca-pill ${l.cls}">${esc(l.marca)}</span></td><td class="c-vend">${esc(l.vend)}</td><td>${esc(l.mat)}</td><td><span class="tipo-tag">${esc(l.tipo)}</span></td><td>${esc(l.rep)}</td><td>${esc(l.cli)}</td><td class="c-num">${fmt(l.q)}</td></tr>`).join('')||`<tr><td colspan="8" class="vazio">Nenhum registro para os filtros.</td></tr>`;
- const aviso=visiveis.length>GERAL_LIMITE?` · mostrando ${fmt(GERAL_LIMITE)} de ${fmt(visiveis.length)} linhas (use os filtros)`:` · ${fmt(visiveis.length)} linhas`;
+ el.querySelector('tbody').innerHTML=visiveis.slice(0,GERAL_LIMITE).map(l=>`<tr><td class="c-data">${esc(l.data)}</td><td><span class="marca-pill ${l.cls}">${esc(l.marca)}</span></td><td class="c-vend">${esc(l.vend)}</td><td>${esc(l.mat)}</td><td><span class="tipo-tag">${esc(l.tipo)}</span></td><td>${esc(l.rep)}</td><td>${esc(l.cli)}</td><td class="c-num">${fmt(l.q)}</td></tr>`).join('')||`<tr><td colspan="8" class="vazio">Nenhum registro para a pesquisa.</td></tr>`;
+ const aviso=visiveis.length>GERAL_LIMITE?` · mostrando ${fmt(GERAL_LIMITE)} de ${fmt(visiveis.length)} linhas (refine a pesquisa)`:` · ${fmt(visiveis.length)} linhas`;
  el.querySelector('tfoot').innerHTML=`<tr><td colspan="7">Total${brandFilter!=='todas'?' · '+esc(brandFilter):''}${aviso}</td><td class="c-num">${fmt(total)}</td></tr>`;
 }
 setupBrandToggles();
@@ -379,10 +395,21 @@ async function refresh(forcar=false){
   Object.assign(aliases,{tipo:['tipo'],qtd:['qtd'],pedido:['pedido'],descr:['descr'],marca:['marca'],vendedor:['vendedor'],codigo:['codigo'],rep:['rep'],cliente:['cliente'],data:['data'],kg:['kg']});
   fill('ano',rows.map(r=>parseDate(r.data)?.getFullYear()?.toString()));
   fill('mes',rows.map(r=>parseDate(r.data)?String(parseDate(r.data).getMonth()+1):''));
+  aplicarFiltroPadrao();
   $('status').textContent=`${fmt(rows.length)} itens • atualizado ${new Date(payload.atualizado_em||Date.now()).toLocaleTimeString('pt-BR')}${payload.atualizando?' • atualização em andamento':payload.cache?' • cache':''}`;
   $('notice').style.display='none';render();
  }catch(e){$('status').textContent='Falha na consulta';showNotice('Não foi possível carregar os dados do Protheus: '+e.message);console.error(e)}
  finally{$('refresh').disabled=false;setLoading(false)}
+}
+// Ao abrir a página: ano atual e mês anterior (em janeiro, dezembro do ano passado)
+let filtroPadraoAplicado=false;
+function aplicarFiltroPadrao(){
+ if(filtroPadraoAplicado)return;filtroPadraoAplicado=true;
+ const hoje=new Date();const ref=new Date(hoje.getFullYear(),hoje.getMonth()-1,1);
+ const ano=String(ref.getFullYear()),mes=String(ref.getMonth()+1);
+ const existe=id=>v=>!!document.querySelector(`[data-filter="${id}"] input[value="${v}"]`);
+ if(existe('ano')(ano)){selections.ano=new Set([ano]);updateMultiLabel('ano')}
+ if(existe('mes')(mes)){selections.mes=new Set([mes]);updateMultiLabel('mes')}
 }
 $('refresh').onclick=()=>refresh(true);
 $('theme').addEventListener('click',()=>{localStorage.setItem('consolidados-theme',document.body.dataset.theme==='dark'?'light':'dark');applyAppearance();if(rows.length)render()});

@@ -504,3 +504,19 @@ body[data-theme="dark"] .rel-planilha tbody tr:hover td{filter:brightness(1.15)}
 .rel-desc .c-bar{width:180px;min-width:150px}
 .rel-desc .c-rank{width:34px}
 .rel-desc .desc-nome{white-space:normal;line-height:1.3}
+
+/* ============================================================
+   V19 — Parcial empilhado, descrição com até 30 linhas e
+   busca única no Relatório Geral
+   ============================================================ */
+@media(min-width:1280px){#parcial .tables{grid-template-columns:1fr}}
+#parcial .tablewrap.limite-linhas{overflow:auto}
+#parcial .tablewrap.limite-linhas th{position:sticky;top:0;z-index:3}
+#parcial .tablewrap.limite-linhas tfoot td{position:sticky;bottom:0}
+
+.geral-topo{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.geral-topo h3{margin:0}
+.geral-busca{position:relative;flex:0 1 380px;min-width:240px}
+.geral-busca span{position:absolute;left:12px;top:50%;transform:translateY(-52%);font-size:17px;color:var(--muted)}
+.geral-busca input{width:100%;height:40px;padding:0 14px 0 36px;border:1px solid var(--border);border-radius:10px;background:var(--field);color:var(--text);font-size:13px}
+.geral-busca input:focus{outline:2px solid var(--m4k);outline-offset:0;border-color:transparent}

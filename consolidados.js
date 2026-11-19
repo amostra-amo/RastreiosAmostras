@@ -78,12 +78,18 @@ function group(data,key,metric='qtd'){const map=new Map();data.forEach(r=>{const
 function table(id,headers,data){const el=$(id);el.replaceChildren();const thead=document.createElement('thead'),tr=document.createElement('tr');headers.forEach(h=>{const th=document.createElement('th');th.textContent=h;tr.append(th)});thead.append(tr);el.append(thead);const tbody=document.createElement('tbody');data.slice(0,3000).forEach(items=>{const tr=document.createElement('tr');items.forEach(item=>{const td=document.createElement('td');td.textContent=item;tr.append(td)});tbody.append(tr)});el.append(tbody)}
 function pendenciaOperacional(r){const venda=number(r.quantidade_venda),faturada=number(r.quantidade_faturada_sd2);return venda>0.000001&&faturada+Math.max(0.000001,venda*0.00001)<venda}
 function orderKey(r){const pedido=String(val(r,'pedido')??'').trim();return pedido?String(r.filial||'').trim()+':'+pedido:null}
+// Regras do relatório: vendedores fora de todo o relatório e marca fixa
+// para casos em que o cadastro do Protheus não reflete a marca correta.
+const VENDEDORES_EXCLUIDOS=new Set(['V99999']); // "sem supervisor"
+const MARCA_VENDEDORA_FIXA={'V00093':'LUARA'};
+function vendedorExcluido(codigo){return VENDEDORES_EXCLUIDOS.has(String(codigo||'').trim().toUpperCase())}
+function marcaVendedoraAjustada(codigo,marca){return MARCA_VENDEDORA_FIXA[String(codigo||'').trim().toUpperCase()]||marca||'Não identificada'}
 // Marca da vendedora: vem do Protheus (SA3.A3_END -> 4K / LUARA).
 function sellerBrand(r){const m=String(r.marca_vendedor||'').trim();return m&&m!=='Não identificada'?m:'Não identificada'}
 // Vendedor no formato "V00100 - BEATRIZ POLITO" (só o código/nome quando faltar um deles).
 function sellerLabel(r){const code=String(r.codigo||'').trim().toUpperCase();const name=String(val(r,'vendedor')||'').trim();if(!code)return name||'—';if(!name||name.toUpperCase()===code)return code;return code+' - '+name}
 function summary(data,keys){const m=new Map();data.forEach(r=>{const labels=keys.map(k=>k==='setor'?sector(r):k==='tipo'?type(r):k==='marca_vendedor'?sellerBrand(r):k==='vendedor_codigo'?sellerLabel(r):val(r,k)||'—');const key=JSON.stringify(labels);const o=m.get(key)||{labels,q:0,orders:new Set(),records:0};o.q+=selectedQuantity(r);const order=orderKey(r);if(order)o.orders.add(order);o.records++;m.set(key,o)});return [...m.values()].sort((a,b)=>b.q-a.q)}
-function renderTables(d,total){const g=summary(d,['marca_vendedor','setor','vendedor_codigo']);table('tParcial1',['Marca','Setor','Vendedor','Pedidos distintos','Quantidade','% Quantidade'],g.map(x=>[...x.labels,fmt(x.orders.size),fmt(x.q),total?fmt(100*x.q/total)+'%':'0%']));table('tParcial2',['Descrição','Registros','Quantidade','% Quantidade'],summary(d,['descr']).map(x=>[...x.labels,fmt(x.records),fmt(x.q),total?fmt(100*x.q/total)+'%':'0%']));table('tCompleto',['Marca','Setor','Vendedor','Descrição','Tipo','Representante','Cliente','Pedidos distintos','Quantidade'],summary(d,['marca','setor','vendedor','descr','tipo','rep','cliente']).map(x=>[...x.labels,fmt(x.orders.size),fmt(x.q)]))}
+function renderTables(d,total){if(active==='parcial'){renderParcialVendedoras(d);renderParcialDescricoes(d);return}if(active==='geral'){renderGeralTeste(d);return}table('tCompleto',['Marca','Setor','Vendedor','Descrição','Tipo','Representante','Cliente','Pedidos distintos','Quantidade'],summary(d,['marca','setor','vendedor','descr','tipo','rep','cliente']).map(x=>[...x.labels,fmt(x.orders.size),fmt(x.q)]))}
 function selectedKg(r){
  const unidade=String(r.unidade_medida||'').trim().toUpperCase();
  if(unidade!=='KG')return 0;
@@ -186,6 +192,115 @@ makeChart('col',{
  }
 });}
 
+/* ============================================================
+   V16 — Relatório Parcial (marca/setor/vendedora) e
+   Relatório Geral (teste)
+   ============================================================ */
+const ORDEM_MARCA={'4K':0,'Luara':1,'Outras':2};
+const ORDEM_SETOR={'Supervisão':0,'Televendas':1,'Loja Física':2,'Loja SP':3,'Não classificado':4};
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+let brandFilter=(()=>{try{return localStorage.getItem('consolidados-marca')||'todas'}catch{return 'todas'}})();
+
+function brandKey(r){const m=norm(sellerBrand(r));return m==='luara'?'Luara':m==='4k'?'4K':'Outras'}
+function brandClass(b){return b==='4K'?'m-4k':b==='Luara'?'m-luara':'m-outras'}
+function byBrand(d){return brandFilter==='todas'?d:d.filter(r=>brandKey(r)===brandFilter)}
+function pct(v,total){return total?100*v/total:0}
+function pctLabel(v,total){const p=pct(v,total);return (p>0&&p<1?p.toLocaleString('pt-BR',{maximumFractionDigits:1}):fmt(p))+'%'}
+function barCell(v,total,classe){const p=Math.min(100,pct(v,total));return `<td class="c-bar"><div class="pbar ${classe||''}"><span style="width:${p.toFixed(2)}%"></span></div><b>${pctLabel(v,total)}</b></td>`}
+function sellerName(r){const name=String(val(r,'vendedor')||'').trim();const code=String(r.codigo||'').trim().toUpperCase();return name&&name.toUpperCase()!==code?name:code||'—'}
+function repLabel(r){const code=String(r.codigo_representante||'').trim();const name=String(r.rep||'').trim();if(!code)return name||'—';if(!name||name===code)return code;return code+' - '+name}
+
+function setupBrandToggles(){
+ const sync=()=>document.querySelectorAll('.brand-toggle button').forEach(b=>{const on=b.dataset.brand===brandFilter;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on))});
+ document.querySelectorAll('.brand-toggle').forEach(group=>group.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-brand]');if(!b)return;
+  brandFilter=b.dataset.brand;try{localStorage.setItem('consolidados-marca',brandFilter)}catch{}
+  sync();render();
+ }));
+ sync();
+}
+
+/* ---------- Resumo por marca, setor e vendedora ---------- */
+function renderParcialVendedoras(d){
+ const el=$('tParcial1');const data=byBrand(d).filter(r=>selectedQuantity(r)>0);
+ const total=data.reduce((s,r)=>s+selectedQuantity(r),0);
+ const marcas=new Map();const todosPedidos=new Set();
+ data.forEach(r=>{
+  const b=brandKey(r),st=sector(r),code=String(r.codigo||'').trim().toUpperCase()||'—';
+  const q=selectedQuantity(r),ped=orderKey(r);if(ped)todosPedidos.add(ped);
+  if(!marcas.has(b))marcas.set(b,{q:0,ped:new Set(),setores:new Map()});
+  const M=marcas.get(b);M.q+=q;if(ped)M.ped.add(ped);
+  if(!M.setores.has(st))M.setores.set(st,{q:0,ped:new Set(),vend:new Map()});
+  const S=M.setores.get(st);S.q+=q;if(ped)S.ped.add(ped);
+  if(!S.vend.has(code))S.vend.set(code,{code,name:sellerName(r),q:0,ped:new Set()});
+  const V=S.vend.get(code);V.q+=q;if(ped)V.ped.add(ped);
+ });
+ let body='';
+ [...marcas.entries()].sort((a,b)=>(ORDEM_MARCA[a[0]]??9)-(ORDEM_MARCA[b[0]]??9)).forEach(([b,M])=>{
+  const cls=brandClass(b);const nVend=[...M.setores.values()].reduce((s,S)=>s+S.vend.size,0);
+  body+=`<tr class="grp-marca ${cls}"><td><span class="marca-pill ${cls}">${esc(b==='Outras'?'Sem marca':b)}</span><span class="grp-meta">${nVend} ${nVend===1?'vendedora':'vendedoras'}</span></td><td class="c-num">${fmt(M.ped.size)}</td><td class="c-num">${fmt(M.q)}</td>${barCell(M.q,total,cls)}</tr>`;
+  [...M.setores.entries()].sort((a,b)=>(ORDEM_SETOR[a[0]]??9)-(ORDEM_SETOR[b[0]]??9)).forEach(([st,S])=>{
+   body+=`<tr class="grp-setor ${cls}"><td><span class="setor-tag">${esc(st)}</span></td><td class="c-num">${fmt(S.ped.size)}</td><td class="c-num">${fmt(S.q)}</td>${barCell(S.q,total,cls)}</tr>`;
+   [...S.vend.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).forEach(V=>{
+    body+=`<tr class="lin-vend ${cls}"><td><span class="vend-cod">${esc(V.code)}</span><span class="vend-nome">${esc(V.name)}</span></td><td class="c-num">${fmt(V.ped.size)}</td><td class="c-num">${fmt(V.q)}</td>${barCell(V.q,total,cls)}</tr>`;
+   });
+  });
+ });
+ if(!body)body=`<tr><td colspan="4" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
+ el.className='rel-parcial';
+ el.innerHTML=`<thead><tr><th>Marca · Setor · Vendedora</th><th class="c-num">Pedidos distintos</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''}</td><td class="c-num">${fmt(todosPedidos.size)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>100%</b></td></tr></tfoot>`;
+}
+
+/* ---------- Resumo por descrição ---------- */
+function renderParcialDescricoes(d){
+ const el=$('tParcial2');const data=byBrand(d).filter(r=>selectedQuantity(r)>0);
+ const total=data.reduce((s,r)=>s+selectedQuantity(r),0);
+ const m=new Map();
+ data.forEach(r=>{const k=String(val(r,'descr')||'Não informado').trim()||'Não informado';const o=m.get(k)||{k,tipo:type(r),reg:0,q:0,q4k:0,qlu:0};o.reg++;const q=selectedQuantity(r);o.q+=q;const b=brandKey(r);if(b==='4K')o.q4k+=q;else if(b==='Luara')o.qlu+=q;m.set(k,o)});
+ const lista=[...m.values()].sort((a,b)=>b.q-a.q||a.k.localeCompare(b.k,'pt-BR'));
+ const totReg=lista.reduce((s,x)=>s+x.reg,0);
+ let body=lista.map((x,i)=>{
+  const p4=x.q?100*x.q4k/x.q:0;
+  const mix=brandFilter==='todas'?`<span class="mix" title="4K: ${fmt(x.q4k)} · Luara: ${fmt(x.qlu)}"><i class="m-4k" style="width:${p4.toFixed(1)}%"></i><i class="m-luara" style="width:${(x.q?100*x.qlu/x.q:0).toFixed(1)}%"></i></span>`:'';
+  return `<tr><td class="c-rank">${i+1}</td><td><span class="desc-nome">${esc(x.k)}</span><span class="desc-tipo">${esc(x.tipo)}</span>${mix}</td><td class="c-num">${fmt(x.reg)}</td><td class="c-num">${fmt(x.q)}</td>${barCell(x.q,total,brandFilter==='todas'?'m-mix':brandClass(brandFilter))}</tr>`;
+ }).join('');
+ if(!body)body=`<tr><td colspan="5" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
+ el.className='rel-desc';
+ el.innerHTML=`<thead><tr><th class="c-rank">#</th><th>Descrição</th><th class="c-num">Registros</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td></td><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''} · ${fmt(lista.length)} descrições</td><td class="c-num">${fmt(totReg)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>100%</b></td></tr></tfoot>`;
+}
+
+/* ---------- Relatório Geral (teste) ---------- */
+const GERAL_COLUNAS=[
+ {id:'marca',titulo:'Marca'},{id:'vend',titulo:'Cód. Vendedora + Nome'},{id:'mat',titulo:'Tipo de material'},
+ {id:'tipo',titulo:'Tipo de amostra'},{id:'rep',titulo:'Cód. Representante + Nome'},{id:'cli',titulo:'Cliente'},{id:'q',titulo:'Quantidade enviada',num:true}
+];
+const geralFiltros={};let geralLinhas=[];const GERAL_LIMITE=3000;
+function renderGeralTeste(d){
+ const data=byBrand(d).filter(r=>selectedQuantity(r)>0);
+ const m=new Map();
+ data.forEach(r=>{
+  const b=brandKey(r);const linha={marca:b==='Outras'?'Sem marca':b,cls:brandClass(b),code:String(r.codigo||'').trim().toUpperCase(),vend:sellerLabel(r),mat:String(val(r,'descr')||'—').trim(),tipo:type(r),rep:repLabel(r),cli:String(val(r,'cliente')||'—').trim(),q:0};
+  const k=[linha.marca,linha.vend,linha.mat,linha.tipo,linha.rep,linha.cli].join('\u0001');
+  const o=m.get(k)||linha;o.q+=selectedQuantity(r);m.set(k,o);
+ });
+ geralLinhas=[...m.values()].sort((a,b)=>(ORDEM_MARCA[a.marca]??9)-(ORDEM_MARCA[b.marca]??9)||a.code.localeCompare(b.code,'pt-BR',{numeric:true})||a.mat.localeCompare(b.mat,'pt-BR')||a.tipo.localeCompare(b.tipo,'pt-BR')||a.rep.localeCompare(b.rep,'pt-BR')||a.cli.localeCompare(b.cli,'pt-BR'));
+ const el=$('tGeral');
+ if(!el.querySelector('thead')){
+  el.innerHTML=`<thead><tr>${GERAL_COLUNAS.map(c=>`<th class="${c.num?'c-num':''}">${esc(c.titulo)}</th>`).join('')}</tr><tr class="filtros">${GERAL_COLUNAS.map(c=>c.num?'<th></th>':`<th><input type="search" data-col="${c.id}" placeholder="Filtrar…" aria-label="Filtrar ${esc(c.titulo)}"></th>`).join('')}</tr></thead><tbody></tbody><tfoot></tfoot>`;
+  let t;el.querySelector('thead').addEventListener('input',e=>{const inp=e.target.closest('input[data-col]');if(!inp)return;geralFiltros[inp.dataset.col]=norm(inp.value);clearTimeout(t);t=setTimeout(pintarGeral,150)});
+ }
+ pintarGeral();
+}
+function pintarGeral(){
+ const el=$('tGeral');const ativos=Object.entries(geralFiltros).filter(([,v])=>v);
+ const visiveis=ativos.length?geralLinhas.filter(l=>ativos.every(([c,v])=>norm(l[c]).includes(v))):geralLinhas;
+ const total=visiveis.reduce((s,l)=>s+l.q,0);
+ el.querySelector('tbody').innerHTML=visiveis.slice(0,GERAL_LIMITE).map(l=>`<tr><td><span class="marca-pill ${l.cls}">${esc(l.marca)}</span></td><td class="c-vend">${esc(l.vend)}</td><td>${esc(l.mat)}</td><td><span class="tipo-tag">${esc(l.tipo)}</span></td><td>${esc(l.rep)}</td><td>${esc(l.cli)}</td><td class="c-num">${fmt(l.q)}</td></tr>`).join('')||`<tr><td colspan="7" class="vazio">Nenhum registro para os filtros.</td></tr>`;
+ const aviso=visiveis.length>GERAL_LIMITE?` · mostrando ${fmt(GERAL_LIMITE)} de ${fmt(visiveis.length)} linhas (use os filtros)`:` · ${fmt(visiveis.length)} linhas`;
+ el.querySelector('tfoot').innerHTML=`<tr><td colspan="6">Total${brandFilter!=='todas'?' · '+esc(brandFilter):''}${aviso}</td><td class="c-num">${fmt(total)}</td></tr>`;
+}
+setupBrandToggles();
+
 $('menu').onclick=()=>{$('sidebar').classList.add('open');$('shade').classList.add('open')};$('shade').onclick=()=>{$('sidebar').classList.remove('open');$('shade').classList.remove('open')};$('side-close').onclick=()=>{$('sidebar').classList.remove('open');$('shade').classList.remove('open')};$('logout').onclick=()=>{localStorage.clear();sessionStorage.clear();location.href='index.html'};
 document.querySelectorAll('#tabs button').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('#tabs button,.page').forEach(x=>x.classList.remove('selected'));btn.classList.add('selected');active=btn.dataset.page;$(active).classList.add('selected');render()});
 setupMulti();
@@ -206,11 +321,11 @@ async function refresh(forcar=false){
   if(!res.ok){let detail='HTTP '+res.status;try{const err=await res.json();detail=err.detail||detail}catch{}throw Error(detail)}
   const payload=await res.json();
   if(!Array.isArray(payload.items))throw Error('Formato de resposta inválido.');if(payload.items.length&&!Object.prototype.hasOwnProperty.call(payload.items[0],'peso_faturado_kg'))throw Error('O Agent ainda não retornou os campos de peso faturado. Reinicie o Agent e aguarde expirar o cache do Railway.');if(payload.items.length&&!Object.prototype.hasOwnProperty.call(payload.items[0],'situacao_faturamento'))throw Error('Backend ainda não retornou dados de faturamento. Atualize o Agent e aguarde expirar o cache de 15 minutos.');
-  rows=payload.items.map(r=>({
+  rows=payload.items.filter(r=>!vendedorExcluido(r.codigo_vendedor)).map(r=>({
    filial:r.filial||'',tipo:r.tipo||'Não informado',qtd:r.quantidade_original??0,
    pedido:r.pedido||'',descr:r.descricao||'',marca:r.marca||'Não identificada',
-   vendedor:r.vendedor||r.codigo_vendedor||'Não identificado',codigo:r.codigo_vendedor||'',classificacao_vendedor:r.classificacao_vendedor||'',marca_vendedor:r.marca_vendedor||'Não identificada',canal_vendedor:r.canal_vendedor||'',
-   rep:r.representante||r.codigo_representante||'',cliente:r.cliente||r.codigo_cliente||'',codigo_cliente:r.codigo_cliente||'',
+   vendedor:r.vendedor||r.codigo_vendedor||'Não identificado',codigo:r.codigo_vendedor||'',classificacao_vendedor:r.classificacao_vendedor||'',marca_vendedor:marcaVendedoraAjustada(r.codigo_vendedor,r.marca_vendedor),canal_vendedor:r.canal_vendedor||'',
+   rep:r.representante||r.codigo_representante||'',codigo_representante:r.codigo_representante||'',cliente:r.cliente||r.codigo_cliente||'',codigo_cliente:r.codigo_cliente||'',
    data:r.data||'',item:r.item||'',kg:r.peso_kg??0,unidade_medida:r.unidade_medida||'',peso_faturado_kg:r.peso_faturado_kg??0,peso_pendente_kg:r.peso_pendente_kg??0,quantidade_venda:r.quantidade_venda??0,quantidade_faturada_sd2:r.quantidade_faturada_sd2??0,quantidade_faturada:r.quantidade_faturada??0,quantidade_pendente:r.quantidade_pendente??0,situacao_faturamento:r.situacao_faturamento||'Pendente',tes:r.tes||'',notas_fiscais:r.notas_fiscais||[]
   }));
   hasKgColumn=true;

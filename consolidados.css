@@ -304,3 +304,107 @@ body.is-loading .sync-dot{animation:cons-pulse 1s ease-in-out infinite}
  body.is-loading .kpi strong,body.is-loading .kpi .spark-trend,
  body.is-loading #refresh span,body.is-loading .sync-dot{animation-duration:2.4s}
 }
+
+/* ============================================================
+   V16 — Relatório Parcial e Relatório Geral (teste)
+   4K = azul · Luara = rosa (mesmas cores do rastreio_amostra)
+   ============================================================ */
+:root{
+ --m4k:#2563EB;--m4k-strong:#1D4ED8;--m4k-soft:#E8F0FF;--m4k-line:#C7D9FF;
+ --mlu:#EC407A;--mlu-strong:#C2185B;--mlu-soft:#FFEAF2;--mlu-line:#FFC7DC;--mlu-bar:#FFA9CB;
+ --mout:#64748B;--mout-soft:#EEF2F6;
+}
+body[data-theme="dark"]{
+ --m4k:#60A5FA;--m4k-strong:#93C5FD;--m4k-soft:rgba(96,165,250,.14);--m4k-line:rgba(96,165,250,.35);
+ --mlu:#F48FB1;--mlu-strong:#F8BBD0;--mlu-soft:rgba(244,143,177,.14);--mlu-line:rgba(244,143,177,.35);--mlu-bar:#F48FB1;
+ --mout:#94A3B8;--mout-soft:rgba(148,163,184,.14);
+}
+
+/* Botão de marca (segmentado) */
+.section-heading{flex-wrap:wrap}
+.brand-toggle{display:inline-flex;align-items:center;gap:4px;padding:4px;border-radius:999px;background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow)}
+.brand-toggle-label{padding:0 8px 0 10px;font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted)}
+.brand-toggle button{display:inline-flex;align-items:center;gap:7px;padding:7px 15px;border:0;border-radius:999px;background:transparent;color:var(--text);font-size:12.5px;font-weight:700;transition:background .15s,color .15s}
+.brand-toggle button:hover{background:var(--soft)}
+.brand-toggle .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+.brand-toggle .dot.m-4k{background:var(--m4k)}
+.brand-toggle .dot.m-luara{background:var(--mlu)}
+.brand-toggle button.on{background:var(--text);color:var(--card)}
+.brand-toggle button[data-brand="4K"].on{background:var(--m4k);color:#fff}
+.brand-toggle button[data-brand="Luara"].on{background:var(--mlu);color:#fff}
+.brand-toggle button.on .dot{background:#fff!important}
+
+.h3-sub{margin-left:8px;font-size:12px;font-weight:500;color:var(--muted)}
+#tabs .tab-teste small{margin-left:6px;padding:2px 7px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;background:#FEF3C7;color:#92400E}
+
+/* Tabelas novas: base comum */
+.rel-parcial,.rel-desc,.rel-geral{font-size:13px}
+.rel-parcial th,.rel-desc th,.rel-geral th{font-size:11px;letter-spacing:.5px;text-transform:uppercase;font-weight:800}
+.c-num{text-align:right!important;font-variant-numeric:tabular-nums}
+.c-rank{width:44px;text-align:center!important;color:var(--muted);font-variant-numeric:tabular-nums}
+.vazio{text-align:center!important;padding:34px!important;color:var(--muted)}
+.c-bar{width:210px;min-width:170px}
+.c-bar b{display:inline-block;min-width:44px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+.pbar{display:inline-block;vertical-align:middle;width:calc(100% - 54px);height:8px;margin-right:8px;border-radius:99px;background:var(--soft);overflow:hidden}
+.pbar span{display:block;height:100%;border-radius:99px;background:var(--mout)}
+.pbar.m-4k span{background:linear-gradient(90deg,var(--m4k),#60A5FA)}
+.pbar.m-luara span{background:linear-gradient(90deg,var(--mlu),var(--mlu-bar))}
+.pbar.m-mix span{background:linear-gradient(90deg,var(--m4k),var(--mlu))}
+
+/* Selos */
+.marca-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:800;letter-spacing:.3px;white-space:nowrap}
+.marca-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.marca-pill.m-4k{background:var(--m4k-soft);color:var(--m4k-strong);border:1px solid var(--m4k-line)}
+.marca-pill.m-luara{background:var(--mlu-soft);color:var(--mlu-strong);border:1px solid var(--mlu-line)}
+.marca-pill.m-outras{background:var(--mout-soft);color:var(--mout);border:1px solid var(--border)}
+.setor-tag,.tipo-tag{display:inline-block;padding:3px 10px;border-radius:7px;font-size:11.5px;font-weight:700;background:var(--soft);color:var(--text);border:1px solid var(--border)}
+
+/* Resumo por marca, setor e vendedora */
+.rel-parcial tbody td{border-bottom:1px solid var(--border)}
+.rel-parcial .grp-marca td{padding:13px 12px;font-weight:800;border-bottom:0}
+.rel-parcial .grp-marca.m-4k td{background:var(--m4k-soft)}
+.rel-parcial .grp-marca.m-luara td{background:var(--mlu-soft)}
+.rel-parcial .grp-marca.m-outras td{background:var(--mout-soft)}
+.rel-parcial .grp-marca td:first-child{box-shadow:inset 4px 0 0 var(--mout)}
+.rel-parcial .grp-marca.m-4k td:first-child{box-shadow:inset 4px 0 0 var(--m4k)}
+.rel-parcial .grp-marca.m-luara td:first-child{box-shadow:inset 4px 0 0 var(--mlu)}
+.rel-parcial .grp-meta{margin-left:10px;font-size:11.5px;font-weight:600;color:var(--muted)}
+.rel-parcial .grp-setor td{padding:9px 12px 9px 26px;font-weight:700;background:color-mix(in srgb,var(--soft) 55%,transparent);color:var(--text)}
+.rel-parcial .grp-setor td:not(:first-child){padding-left:12px}
+.rel-parcial .lin-vend td{padding:9px 12px}
+.rel-parcial .lin-vend td:first-child{padding-left:42px}
+.vend-cod{display:inline-block;min-width:66px;margin-right:10px;padding:2px 7px;border-radius:6px;font:700 11.5px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--soft);color:var(--muted);text-align:center}
+.lin-vend.m-4k .vend-cod{color:var(--m4k-strong);background:var(--m4k-soft)}
+.lin-vend.m-luara .vend-cod{color:var(--mlu-strong);background:var(--mlu-soft)}
+.vend-nome{font-weight:600}
+
+/* Resumo por descrição */
+.rel-desc td{vertical-align:middle}
+.desc-nome{display:block;font-weight:650}
+.desc-tipo{display:inline-block;margin-top:3px;font-size:11px;color:var(--muted)}
+.mix{display:inline-flex;vertical-align:middle;width:70px;height:5px;margin:3px 0 0 10px;border-radius:99px;overflow:hidden;background:var(--soft)}
+.mix i{display:block;height:100%}
+.mix i.m-4k{background:var(--m4k)}
+.mix i.m-luara{background:var(--mlu)}
+
+/* Total sempre visível (fixo no rodapé da tabela) */
+.rel-parcial tfoot td,.rel-desc tfoot td,.rel-geral tfoot td{position:sticky;bottom:0;z-index:2;padding:13px 12px;font-weight:800;background:var(--text);color:var(--card);border:0}
+.rel-parcial tfoot td:first-child,.rel-desc tfoot td:first-child,.rel-geral tfoot td:first-child{border-radius:0 0 0 10px}
+.rel-parcial tfoot td:last-child,.rel-desc tfoot td:last-child,.rel-geral tfoot td:last-child{border-radius:0 0 10px 0}
+
+/* Relatório Geral (teste) */
+.rel-geral td{padding:9px 12px}
+.rel-geral .c-vend{font-weight:650}
+.rel-geral thead tr.filtros th{top:41px;padding:6px 8px;background:var(--card);border-bottom:1px solid var(--border)}
+.rel-geral thead tr.filtros input{width:100%;min-width:90px;height:30px;padding:0 9px;border:1px solid var(--border);border-radius:7px;background:var(--field);color:var(--text);font-size:12px;font-weight:500;text-transform:none;letter-spacing:0}
+.rel-geral thead tr.filtros input:focus{outline:2px solid var(--m4k);outline-offset:0;border-color:transparent}
+.rel-geral tbody tr:nth-child(even) td{background:color-mix(in srgb,var(--soft) 45%,transparent)}
+.rel-geral tbody tr:hover td{background:var(--soft)}
+@media(max-width:700px){.brand-toggle{width:100%;justify-content:space-between}.c-bar{width:150px;min-width:130px}}
+/* Geral: textos longos quebram linha para a quantidade caber na tela */
+.rel-geral td{white-space:normal;line-height:1.35}
+.rel-geral td:nth-child(1),.rel-geral td:nth-child(4),.rel-geral td:nth-child(7){white-space:nowrap}
+.rel-geral td:nth-child(2){min-width:170px}
+.rel-geral td:nth-child(3){min-width:180px}
+.rel-geral td:nth-child(6){min-width:200px}
+.rel-geral th:nth-child(7),.rel-geral td:nth-child(7){width:110px}

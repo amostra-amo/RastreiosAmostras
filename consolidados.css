@@ -723,3 +723,13 @@ i.m-luara{background:var(--mlu)}
 .dash-main .kpi-spark{display:none!important}
 .dash-main .kpi-card-info{padding:14px 16px 13px!important}
 .dash-main .kpi-split .dbar{max-width:none}
+
+/* ============================================================
+   V26 — Luara: rosa puxado para o vermelho (framboesa)
+   ============================================================ */
+:root{
+ --mlu:#E11D48;--mlu-strong:#BE123C;--mlu-soft:#FFE4E8;--mlu-line:#FECDD3;--mlu-bar:#FB7185;
+}
+body[data-theme="dark"]{
+ --mlu:#FB7185;--mlu-strong:#FDA4AF;--mlu-soft:rgba(251,113,133,.15);--mlu-line:rgba(251,113,133,.38);--mlu-bar:#FB7185;
+}

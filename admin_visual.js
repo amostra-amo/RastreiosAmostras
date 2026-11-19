@@ -2,7 +2,7 @@
    ADMIN — VISUAL 2026
    Complementa o admin.js sem mudar a lógica de salvar:
    - linhas compactas (só permissões ativas; opções ao editar)
-   - selo "Sem acesso"
+   - aviso "Sem código cadastrado"
    - cartões de resumo com filtro
    - status em uma linha
    - ícones nas ações
@@ -59,7 +59,7 @@
     }
 
     // Vendedora sem permissões extras mostra "Rastreio · padrão";
-    // "Sem acesso" fica só para quem não tem código nem permissão.
+    // "Sem código cadastrado" fica só para quem não tem código nem permissão.
     function ajustarResumoLinha(tr) {
         const resumo = tr.querySelector(".active-permissions");
         if (!resumo) return;
@@ -93,8 +93,8 @@
             if (!permissoes.length) {
                 return `
                     <div class="active-permissions av-resumo">
-                        <span class="av-selo-sem-acesso" title="Este usuário ainda não tem nenhuma tela ou supervisão liberada">
-                            Sem acesso
+                        <span class="av-selo-sem-codigo" title="Sem código de vendedora cadastrado e sem permissões extras. Use o lápis (editar) para cadastrar o código.">
+                            Sem código cadastrado
                         </span>
                     </div>`;
             }
@@ -244,8 +244,7 @@
         bloco.innerHTML = [
             ["todos", "Usuários", "av-card-azul", ICONES.usuarios, "Mostrar todos"],
             ["online", "Online agora", "av-card-verde", ICONES.online, "Mostrar só quem está online"],
-            ["admin", "Administradores", "av-card-roxo", ICONES.admin, "Mostrar quem tem acesso ao Admin"],
-            ["sem-acesso", "Sem acesso", "av-card-laranja", ICONES.semAcesso, "Mostrar quem não tem código de vendedora nem permissão"]
+            ["admin", "Administradores", "av-card-roxo", ICONES.admin, "Mostrar quem tem acesso ao Admin"]
         ].map(([filtro, rotulo, cor, icone, dica]) => `
             <button type="button" class="av-card ${cor}" data-filtro="${filtro}" title="${dica}">
                 <span class="av-card-texto">

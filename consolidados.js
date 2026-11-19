@@ -223,48 +223,26 @@ function setupBrandToggles(){
 }
 
 /* ---------- Resumo por marca, setor e vendedora (formato planilha) ---------- */
-// Mini gráfico de barras: quantidade dos últimos meses do período filtrado
-function miniBarras(valores,classe,rotulos){
- const n=valores.length;if(!n)return '';
- const maior=Math.max(...valores)||1,w=7,gap=3,h=22,largura=n*(w+gap)-gap;
- const barras=valores.map((v,i)=>{const alt=v?Math.max(2,Math.round(h*v/maior)):1;return `<rect x="${i*(w+gap)}" y="${h-alt}" width="${w}" height="${alt}" rx="1.5"${v?'':' class="zero"'}><title>${esc(rotulos[i])}: ${fmt(v)}</title></rect>`}).join('');
- return `<svg class="mini-barras ${classe}" viewBox="0 0 ${largura} ${h}" width="${largura}" height="${h}" role="img" aria-label="Quantidade por mês">${barras}</svg>`;
-}
-function mesesRecentes(data,qtd){
- const chaves=[...new Set(data.map(r=>{const dt=parseDate(val(r,'data'));return dt?dt.getFullYear()*12+dt.getMonth():null}).filter(v=>v!==null))].sort((a,b)=>a-b);
- if(!chaves.length)return [];
- const ultimo=chaves[chaves.length-1];
- return Array.from({length:qtd},(_,i)=>ultimo-(qtd-1-i));
-}
 function renderParcialVendedoras(d){
  const el=$('tParcial1');const data=byBrand(d).filter(r=>selectedQuantity(r)>0);
  const total=data.reduce((s,r)=>s+selectedQuantity(r),0);
- const meses=mesesRecentes(data,6);const idx=new Map(meses.map((k,i)=>[k,i]));
- const rotulos=meses.map(k=>MONTHS[k%12]+'/'+String(Math.floor(k/12)).slice(2));
  const m=new Map();
  data.forEach(r=>{
   const b=brandKey(r),st=sector(r),code=String(r.codigo||'').trim().toUpperCase()||'—';
   const k=b+'\u0001'+st+'\u0001'+code;const q=selectedQuantity(r);
-  const o=m.get(k)||{b,st,code,name:sellerName(r),q:0,mes:new Array(meses.length).fill(0)};
+  const o=m.get(k)||{b,st,code,name:sellerName(r),q:0};
   o.q+=q;m.set(k,o);
- });
- // Mini gráfico: os 6 meses até o último mês filtrado, ignorando o filtro
- // de ano/mês (com "Out" selecionado, mostra Mai a Out).
- rows.filter(r=>rowMatchesItems(r)&&(!selections.setor.size||selections.setor.has(sector(r)))&&(brandFilter==='todas'||brandKey(r)===brandFilter)).forEach(r=>{
-  const dt=parseDate(val(r,'data'));if(!dt)return;const pos=idx.get(dt.getFullYear()*12+dt.getMonth());if(pos===undefined)return;
-  const o=m.get(brandKey(r)+'\u0001'+sector(r)+'\u0001'+(String(r.codigo||'').trim().toUpperCase()||'—'));if(o)o.mes[pos]+=selectedQuantity(r);
  });
  // Ordem: marca > setor (Supervisão, Televendas, Loja, Loja Física) > maior quantidade
  const linhas=[...m.values()].sort((a,b)=>(ORDEM_MARCA[a.b]??9)-(ORDEM_MARCA[b.b]??9)||(ORDEM_SETOR[a.st]??9)-(ORDEM_SETOR[b.st]??9)||b.q-a.q||a.name.localeCompare(b.name,'pt-BR'));
  let marcaAnt='',setorAnt='';
  const body=linhas.map(l=>{
   const cls=brandClass(l.b);const novaMarca=l.b!==marcaAnt;const novoSetor=!novaMarca&&l.st!==setorAnt;marcaAnt=l.b;setorAnt=l.st;
-  return `<tr class="${cls}${novaMarca?' inicio-marca':''}${novoSetor?' inicio-setor':''}"><td><span class="marca-pill ${cls}">${esc(l.b==='Outras'?'Sem marca':l.b)}</span></td><td class="c-setor">${esc(l.st)}</td><td><span class="vend-nome" title="${esc(l.code)}">${esc(l.name)}</span><span class="vend-cod-mini">${esc(l.code)}</span></td><td class="c-mini">${miniBarras(l.mes,cls,rotulos)}</td><td class="c-num">${fmt(l.q)}</td><td class="c-num c-pct">${pctLabel(l.q,total)}</td></tr>`;
- }).join('')||`<tr><td colspan="6" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
+  return `<tr class="${cls}${novaMarca?' inicio-marca':''}${novoSetor?' inicio-setor':''}"><td><span class="marca-pill ${cls}">${esc(l.b==='Outras'?'Sem marca':l.b)}</span></td><td class="c-setor">${esc(l.st)}</td><td><span class="vend-nome" title="${esc(l.code)}">${esc(l.name)}</span><span class="vend-cod-mini">${esc(l.code)}</span></td><td class="c-num">${fmt(l.q)}</td><td class="c-num c-pct">${pctLabel(l.q,total)}</td></tr>`;
+ }).join('')||`<tr><td colspan="5" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
  el.className='rel-parcial rel-planilha';
  el.closest('.tablewrap')?.classList.add('sem-scroll');
- const periodo=rotulos.length?`${rotulos[0]} a ${rotulos[rotulos.length-1]}`:'';
- el.innerHTML=`<thead><tr><th>Marca</th><th>Setor</th><th>Vendedora</th><th class="c-mini" title="Quantidade por mês${periodo?' ('+periodo+')':''}">Últimos 6 meses</th><th class="c-num">Quant.</th><th class="c-num">%</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="4">Total geral${brandFilter!=='todas'?' · '+esc(brandFilter):''}</td><td class="c-num">${fmt(total)}</td><td class="c-num">${PCT_TOTAL}</td></tr></tfoot>`;
+ el.innerHTML=`<thead><tr><th>Marca</th><th>Setor</th><th>Vendedora</th><th class="c-num">Quant.</th><th class="c-num">%</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="3">Total geral${brandFilter!=='todas'?' · '+esc(brandFilter):''}</td><td class="c-num">${fmt(total)}</td><td class="c-num">${PCT_TOTAL}</td></tr></tfoot>`;
 }
 
 /* ---------- Resumo por descrição ---------- */
@@ -275,24 +253,39 @@ function renderParcialDescricoes(d){
  const m=new Map();descDetalhe=new Map();
  data.forEach(r=>{
   const k=String(val(r,'descr')||'Não informado').trim()||'Não informado';const q=selectedQuantity(r);
-  const o=m.get(k)||{k,reg:0,q:0};o.reg++;o.q+=q;m.set(k,o);
+  const o=m.get(k)||{k,ped:new Set(),q:0};const pedido=orderKey(r);if(pedido)o.ped.add(pedido);o.q+=q;m.set(k,o);
   // vendedoras que enviaram cada artigo (para o detalhe ao passar o mouse)
   if(!descDetalhe.has(k))descDetalhe.set(k,new Map());
   const vm=descDetalhe.get(k);const code=String(r.codigo||'').trim().toUpperCase()||'—';
   const v=vm.get(code)||{code,name:sellerName(r),b:brandKey(r),q:0};v.q+=q;vm.set(code,v);
  });
  const lista=[...m.values()].sort((a,b)=>b.q-a.q||a.k.localeCompare(b.k,'pt-BR'));
- const maior=lista.length?lista[0].q:0;const totReg=lista.reduce((s,x)=>s+x.reg,0);
+ const maior=lista.length?lista[0].q:0;
+ const totPed=new Set(data.map(orderKey).filter(Boolean)).size;
  const cor=brandFilter==='todas'?'m-mix':brandClass(brandFilter);
  // A barra é proporcional ao artigo com mais quantidade (fica mais preenchida);
  // o número continua sendo a participação no total.
- const body=lista.map((x,i)=>`<tr data-desc="${esc(x.k)}"><td class="c-rank">${i+1}</td><td><span class="desc-nome">${esc(x.k)}</span></td><td class="c-num">${fmt(x.reg)}</td><td class="c-num">${fmt(x.q)}</td><td class="c-bar"><div class="pbar ${cor}"><span style="width:${(maior?Math.max(3,100*x.q/maior):0).toFixed(1)}%"></span></div><b>${pctLabel(x.q,total)}</b></td></tr>`).join('')
+ const body=lista.map((x,i)=>`<tr data-desc="${esc(x.k)}"><td class="c-rank">${i+1}</td><td><span class="desc-nome">${esc(x.k)}</span></td><td class="c-num">${fmt(x.ped.size)}</td><td class="c-num">${fmt(x.q)}</td><td class="c-bar"><div class="pbar ${cor}"><span style="width:${(maior?Math.max(3,100*x.q/maior):0).toFixed(1)}%"></span></div><b>${pctLabel(x.q,total)}</b></td></tr>`).join('')
   ||`<tr><td colspan="5" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
  el.className='rel-desc';
- el.innerHTML=`<thead><tr><th class="c-rank">#</th><th>Descrição</th><th class="c-num">Registros</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td></td><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''} · ${fmt(lista.length)} descrições</td><td class="c-num">${fmt(totReg)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>${PCT_TOTAL}</b></td></tr></tfoot>`;
+ el.innerHTML=`<thead><tr><th class="c-rank">#</th><th>Artigo</th><th class="c-num">Pedidos</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td></td><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''} · ${fmt(lista.length)} artigos</td><td class="c-num">${fmt(totPed)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>${PCT_TOTAL}</b></td></tr></tfoot>`;
  ligarDetalheDescricao(el);
- limitarLinhasVisiveis(el,30);
+ igualarAlturaArtigos(el);
 }
+// Lado a lado: Artigos fica com a mesma altura do resumo por marca e rola
+// por dentro. Empilhado (tela estreita): mostra até 30 linhas.
+function igualarAlturaArtigos(el){
+ const wrap=el.closest('.tablewrap');const cardArt=el.closest('article');const cardMarca=$('tParcial1')?.closest('article');
+ if(!wrap||!cardArt||!cardMarca)return;
+ wrap.classList.add('limite-linhas');wrap.style.maxHeight='';
+ requestAnimationFrame(()=>{
+  const ladoALado=Math.abs(cardArt.getBoundingClientRect().top-cardMarca.getBoundingClientRect().top)<4;
+  if(!ladoALado){limitarLinhasVisiveis(el,30);return}
+  const sobra=cardArt.offsetHeight-wrap.offsetHeight;
+  wrap.style.maxHeight=Math.max(240,cardMarca.offsetHeight-sobra)+'px';
+ });
+}
+window.addEventListener('resize',()=>{if(active==='parcial'&&$('tParcial2')?.tBodies.length)igualarAlturaArtigos($('tParcial2'))});
 // Mostra até N linhas; acima disso a tabela rola (cabeçalho e total ficam fixos)
 function limitarLinhasVisiveis(el,n){
  const wrap=el.closest('.tablewrap');if(!wrap)return;

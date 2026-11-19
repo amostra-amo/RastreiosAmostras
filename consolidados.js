@@ -55,7 +55,7 @@ function weightNumber(v){
 }
 function number(v){let s=String(v??'').trim().replace(/\s/g,'').replace(/[^\d,.-]/g,'');if(s.includes(',')&&s.includes('.'))s=s.replace(/\./g,'').replace(',','.');else if(s.includes(','))s=s.replace(',','.');return Number(s)||0}
 function parseDate(v){if(!v)return null;const s=String(v).trim();const compact=s.match(/^(\d{4})(\d{2})(\d{2})$/);if(compact){const d=new Date(+compact[1],+compact[2]-1,+compact[3]);return d.getFullYear()===+compact[1]&&d.getMonth()===+compact[2]-1&&d.getDate()===+compact[3]?d:null}const m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);if(m){const d=new Date(+m[3],+m[2]-1,+m[1]);return d.getMonth()===+m[2]-1?d:null}const d=new Date(s);return isNaN(d)?null:d}
-function sector(r){const code=String(val(r,'codigo')).trim().toUpperCase().replace(/\s/g,'');if(code.startsWith('V00'))return 'Supervisão';if(code.startsWith('S50')||code.startsWith('S55'))return 'Televendas';if(code.startsWith('S62'))return 'Loja Física';if(code.startsWith('S00'))return 'Loja SP';return 'Não classificado'}
+function sector(r){const code=String(val(r,'codigo')).trim().toUpperCase().replace(/\s/g,'');if(code.startsWith('V00'))return 'Supervisão';if(code.startsWith('S50')||code.startsWith('S55'))return 'Televendas';if(code.startsWith('S61')||code.startsWith('S62'))return 'Loja Física';if(code.startsWith('S00'))return 'Loja SP';return 'Não classificado'}
 function type(r){const t=norm(val(r,'tipo'));if(!t||t==='naoinformado'||t==='naodefinido')return 'Não informado';if(t.includes('pilot'))return 'Pilotagem';if(t.includes('bandeira'))return 'Bandeira';if(t.includes('cartela')||t.includes('cor')||t.includes('mostruario'))return 'Cartela de cores';if(t==='pdv')return 'PDV';if(t.includes('brinde'))return 'Brindes';if(t.includes('talao'))return 'Talão de vendas';return 'Não informado'}
 // Seleções múltiplas: OR dentro de cada filtro e AND entre filtros.
 const selections={metrica:new Set(),setor:new Set(),ano:new Set(),mes:new Set()};
@@ -220,84 +220,111 @@ function setupBrandToggles(){
  sync();
 }
 
-/* ---------- Resumo por marca, setor e vendedora ---------- */
+/* ---------- Resumo por marca, setor e vendedora (formato planilha) ---------- */
 function renderParcialVendedoras(d){
  const el=$('tParcial1');const data=byBrand(d).filter(r=>selectedQuantity(r)>0);
  const total=data.reduce((s,r)=>s+selectedQuantity(r),0);
- const marcas=new Map();const todosPedidos=new Set();
+ const m=new Map();
  data.forEach(r=>{
   const b=brandKey(r),st=sector(r),code=String(r.codigo||'').trim().toUpperCase()||'—';
-  const q=selectedQuantity(r),ped=orderKey(r);if(ped)todosPedidos.add(ped);
-  if(!marcas.has(b))marcas.set(b,{q:0,ped:new Set(),setores:new Map()});
-  const M=marcas.get(b);M.q+=q;if(ped)M.ped.add(ped);
-  if(!M.setores.has(st))M.setores.set(st,{q:0,ped:new Set(),vend:new Map()});
-  const S=M.setores.get(st);S.q+=q;if(ped)S.ped.add(ped);
-  if(!S.vend.has(code))S.vend.set(code,{code,name:sellerName(r),q:0,ped:new Set()});
-  const V=S.vend.get(code);V.q+=q;if(ped)V.ped.add(ped);
+  const k=b+'\u0001'+st+'\u0001'+code;
+  const o=m.get(k)||{b,st,code,name:sellerName(r),q:0};o.q+=selectedQuantity(r);m.set(k,o);
  });
- let body='';
- [...marcas.entries()].sort((a,b)=>(ORDEM_MARCA[a[0]]??9)-(ORDEM_MARCA[b[0]]??9)).forEach(([b,M])=>{
-  const cls=brandClass(b);const nVend=[...M.setores.values()].reduce((s,S)=>s+S.vend.size,0);
-  body+=`<tr class="grp-marca ${cls}"><td><span class="marca-pill ${cls}">${esc(b==='Outras'?'Sem marca':b)}</span><span class="grp-meta">${nVend} ${nVend===1?'vendedora':'vendedoras'}</span></td><td class="c-num">${fmt(M.ped.size)}</td><td class="c-num">${fmt(M.q)}</td>${barCell(M.q,total,cls)}</tr>`;
-  [...M.setores.entries()].sort((a,b)=>(ORDEM_SETOR[a[0]]??9)-(ORDEM_SETOR[b[0]]??9)).forEach(([st,S])=>{
-   body+=`<tr class="grp-setor ${cls}"><td><span class="setor-tag">${esc(st)}</span></td><td class="c-num">${fmt(S.ped.size)}</td><td class="c-num">${fmt(S.q)}</td>${barCell(S.q,total,cls)}</tr>`;
-   [...S.vend.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR')).forEach(V=>{
-    body+=`<tr class="lin-vend ${cls}"><td><span class="vend-cod">${esc(V.code)}</span><span class="vend-nome">${esc(V.name)}</span></td><td class="c-num">${fmt(V.ped.size)}</td><td class="c-num">${fmt(V.q)}</td>${barCell(V.q,total,cls)}</tr>`;
-   });
-  });
- });
- if(!body)body=`<tr><td colspan="4" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
- el.className='rel-parcial';
- el.innerHTML=`<thead><tr><th>Marca · Setor · Vendedora</th><th class="c-num">Pedidos distintos</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''}</td><td class="c-num">${fmt(todosPedidos.size)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>100%</b></td></tr></tfoot>`;
+ // Ordem: marca > setor > maior quantidade (como na planilha)
+ const linhas=[...m.values()].sort((a,b)=>(ORDEM_MARCA[a.b]??9)-(ORDEM_MARCA[b.b]??9)||(ORDEM_SETOR[a.st]??9)-(ORDEM_SETOR[b.st]??9)||b.q-a.q||a.name.localeCompare(b.name,'pt-BR'));
+ let anterior='';
+ const body=linhas.map(l=>{
+  const cls=brandClass(l.b);const inicioMarca=l.b!==anterior;anterior=l.b;
+  return `<tr class="${cls}${inicioMarca?' inicio-marca':''}"><td><span class="marca-pill ${cls}">${esc(l.b==='Outras'?'Sem marca':l.b)}</span></td><td>${esc(l.st)}</td><td><span class="vend-nome" title="${esc(l.code)}">${esc(l.name)}</span><span class="vend-cod-mini">${esc(l.code)}</span></td><td class="c-num">${fmt(l.q)}</td><td class="c-num c-pct">${pctLabel(l.q,total)}</td></tr>`;
+ }).join('')||`<tr><td colspan="5" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
+ el.className='rel-parcial rel-planilha';
+ el.closest('.tablewrap')?.classList.add('sem-scroll');
+ el.innerHTML=`<thead><tr><th>Marca</th><th>Setor</th><th>Vendedora</th><th class="c-num">Quant.</th><th class="c-num">%</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td colspan="3">Total geral${brandFilter!=='todas'?' · '+esc(brandFilter):''}</td><td class="c-num">${fmt(total)}</td><td class="c-num">100%</td></tr></tfoot>`;
 }
 
 /* ---------- Resumo por descrição ---------- */
+let descDetalhe=new Map();
 function renderParcialDescricoes(d){
  const el=$('tParcial2');const data=byBrand(d).filter(r=>selectedQuantity(r)>0);
  const total=data.reduce((s,r)=>s+selectedQuantity(r),0);
- const m=new Map();
- data.forEach(r=>{const k=String(val(r,'descr')||'Não informado').trim()||'Não informado';const o=m.get(k)||{k,tipo:type(r),reg:0,q:0,q4k:0,qlu:0};o.reg++;const q=selectedQuantity(r);o.q+=q;const b=brandKey(r);if(b==='4K')o.q4k+=q;else if(b==='Luara')o.qlu+=q;m.set(k,o)});
+ const m=new Map();descDetalhe=new Map();
+ data.forEach(r=>{
+  const k=String(val(r,'descr')||'Não informado').trim()||'Não informado';const q=selectedQuantity(r);
+  const o=m.get(k)||{k,reg:0,q:0};o.reg++;o.q+=q;m.set(k,o);
+  // vendedoras que enviaram cada artigo (para o detalhe ao passar o mouse)
+  if(!descDetalhe.has(k))descDetalhe.set(k,new Map());
+  const vm=descDetalhe.get(k);const code=String(r.codigo||'').trim().toUpperCase()||'—';
+  const v=vm.get(code)||{code,name:sellerName(r),b:brandKey(r),q:0};v.q+=q;vm.set(code,v);
+ });
  const lista=[...m.values()].sort((a,b)=>b.q-a.q||a.k.localeCompare(b.k,'pt-BR'));
- const totReg=lista.reduce((s,x)=>s+x.reg,0);
- let body=lista.map((x,i)=>{
-  const p4=x.q?100*x.q4k/x.q:0;
-  const mix=brandFilter==='todas'?`<span class="mix" title="4K: ${fmt(x.q4k)} · Luara: ${fmt(x.qlu)}"><i class="m-4k" style="width:${p4.toFixed(1)}%"></i><i class="m-luara" style="width:${(x.q?100*x.qlu/x.q:0).toFixed(1)}%"></i></span>`:'';
-  return `<tr><td class="c-rank">${i+1}</td><td><span class="desc-nome">${esc(x.k)}</span><span class="desc-tipo">${esc(x.tipo)}</span>${mix}</td><td class="c-num">${fmt(x.reg)}</td><td class="c-num">${fmt(x.q)}</td>${barCell(x.q,total,brandFilter==='todas'?'m-mix':brandClass(brandFilter))}</tr>`;
- }).join('');
- if(!body)body=`<tr><td colspan="5" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
+ const maior=lista.length?lista[0].q:0;const totReg=lista.reduce((s,x)=>s+x.reg,0);
+ const cor=brandFilter==='todas'?'m-mix':brandClass(brandFilter);
+ // A barra é proporcional ao artigo com mais quantidade (fica mais preenchida);
+ // o número continua sendo a participação no total.
+ const body=lista.map((x,i)=>`<tr data-desc="${esc(x.k)}"><td class="c-rank">${i+1}</td><td><span class="desc-nome">${esc(x.k)}</span></td><td class="c-num">${fmt(x.reg)}</td><td class="c-num">${fmt(x.q)}</td><td class="c-bar"><div class="pbar ${cor}"><span style="width:${(maior?Math.max(3,100*x.q/maior):0).toFixed(1)}%"></span></div><b>${pctLabel(x.q,total)}</b></td></tr>`).join('')
+  ||`<tr><td colspan="5" class="vazio">Nenhum registro para a marca e os filtros selecionados.</td></tr>`;
  el.className='rel-desc';
  el.innerHTML=`<thead><tr><th class="c-rank">#</th><th>Descrição</th><th class="c-num">Registros</th><th class="c-num">Quantidade</th><th class="c-bar">Participação</th></tr></thead><tbody>${body}</tbody><tfoot><tr><td></td><td>Total${brandFilter!=='todas'?' · '+esc(brandFilter):''} · ${fmt(lista.length)} descrições</td><td class="c-num">${fmt(totReg)}</td><td class="c-num">${fmt(total)}</td><td class="c-bar"><b>100%</b></td></tr></tfoot>`;
+ ligarDetalheDescricao(el);
+}
+
+function ligarDetalheDescricao(el){
+ if(el.dataset.detalhe)return;el.dataset.detalhe='1';
+ let tip=document.getElementById('descTip');
+ if(!tip){tip=document.createElement('div');tip.id='descTip';tip.className='desc-tip';tip.setAttribute('role','tooltip');document.body.append(tip)}
+ const posicionar=e=>{const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+18,y=e.clientY+16;if(x+w>innerWidth-12)x=e.clientX-w-18;if(y+h>innerHeight-12)y=Math.max(12,innerHeight-h-12);tip.style.left=x+'px';tip.style.top=y+'px'};
+ el.addEventListener('mouseover',e=>{
+  const tr=e.target.closest('tbody tr[data-desc]');if(!tr){tip.classList.remove('on');return}
+  if(tip.dataset.desc!==tr.dataset.desc){
+   const vend=[...(descDetalhe.get(tr.dataset.desc)||new Map()).values()].sort((a,b)=>b.q-a.q);
+   const top=vend.slice(0,8),maior=top.length?top[0].q:0,soma=vend.reduce((s,v)=>s+v.q,0);
+   tip.innerHTML=`<div class="tip-titulo">${esc(tr.dataset.desc)}</div><div class="tip-sub">Vendedoras que mais enviaram</div><table>${top.map(v=>`<tr><td><span class="tip-dot ${brandClass(v.b)}"></span>${esc(v.name)}</td><td class="tip-bar"><div class="pbar ${brandClass(v.b)}"><span style="width:${(maior?Math.max(4,100*v.q/maior):0).toFixed(1)}%"></span></div></td><td class="c-num">${fmt(v.q)}</td></tr>`).join('')}</table>${vend.length>top.length?`<div class="tip-rodape">+ ${vend.length-top.length} vendedoras · total ${fmt(soma)}</div>`:`<div class="tip-rodape">Total ${fmt(soma)}</div>`}`;
+   tip.dataset.desc=tr.dataset.desc;
+  }
+  tip.classList.add('on');posicionar(e);
+ });
+ el.addEventListener('mousemove',e=>{if(tip.classList.contains('on'))posicionar(e)});
+ el.addEventListener('mouseleave',()=>{tip.classList.remove('on')});
 }
 
 /* ---------- Relatório Geral (teste) ---------- */
 const GERAL_COLUNAS=[
- {id:'marca',titulo:'Marca'},{id:'vend',titulo:'Cód. Vendedora + Nome'},{id:'mat',titulo:'Tipo de material'},
- {id:'tipo',titulo:'Tipo de amostra'},{id:'rep',titulo:'Cód. Representante + Nome'},{id:'cli',titulo:'Cliente'},{id:'q',titulo:'Quantidade enviada',num:true}
+ {id:'data',titulo:'Data',data:true},{id:'marca',titulo:'Marca'},{id:'vend',titulo:'Cód. Vendedora + Nome'},{id:'mat',titulo:'Tipo de material'},
+ {id:'tipo',titulo:'Tipo de amostra'},{id:'rep',titulo:'Cód. Representante + Nome'},{id:'cli',titulo:'Nome do cliente'},{id:'q',titulo:'Quantidade enviada',num:true}
 ];
-const geralFiltros={};let geralLinhas=[];const GERAL_LIMITE=3000;
+const geralFiltros={};let geralLinhas=[];let geralDe='',geralAte='';const GERAL_LIMITE=3000;
+function dataISO(dt){return dt?dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0'):''}
 function renderGeralTeste(d){
  const data=byBrand(d).filter(r=>selectedQuantity(r)>0);
  const m=new Map();
  data.forEach(r=>{
-  const b=brandKey(r);const linha={marca:b==='Outras'?'Sem marca':b,cls:brandClass(b),code:String(r.codigo||'').trim().toUpperCase(),vend:sellerLabel(r),mat:String(val(r,'descr')||'—').trim(),tipo:type(r),rep:repLabel(r),cli:String(val(r,'cliente')||'—').trim(),q:0};
-  const k=[linha.marca,linha.vend,linha.mat,linha.tipo,linha.rep,linha.cli].join('\u0001');
+  const b=brandKey(r);const dt=parseDate(val(r,'data'));
+  const linha={iso:dataISO(dt),data:dt?dt.toLocaleDateString('pt-BR'):'—',marca:b==='Outras'?'Sem marca':b,cls:brandClass(b),code:String(r.codigo||'').trim().toUpperCase(),vend:sellerLabel(r),mat:String(val(r,'descr')||'—').trim(),tipo:type(r),rep:repLabel(r),cli:String(val(r,'cliente')||'—').trim(),q:0};
+  const k=[linha.iso,linha.marca,linha.vend,linha.mat,linha.tipo,linha.rep,linha.cli].join('\u0001');
   const o=m.get(k)||linha;o.q+=selectedQuantity(r);m.set(k,o);
  });
- geralLinhas=[...m.values()].sort((a,b)=>(ORDEM_MARCA[a.marca]??9)-(ORDEM_MARCA[b.marca]??9)||a.code.localeCompare(b.code,'pt-BR',{numeric:true})||a.mat.localeCompare(b.mat,'pt-BR')||a.tipo.localeCompare(b.tipo,'pt-BR')||a.rep.localeCompare(b.rep,'pt-BR')||a.cli.localeCompare(b.cli,'pt-BR'));
+ // Mais recente primeiro; no mesmo dia, marca > vendedora > material
+ geralLinhas=[...m.values()].sort((a,b)=>b.iso.localeCompare(a.iso)||(ORDEM_MARCA[a.marca]??9)-(ORDEM_MARCA[b.marca]??9)||a.code.localeCompare(b.code,'pt-BR',{numeric:true})||a.mat.localeCompare(b.mat,'pt-BR')||a.cli.localeCompare(b.cli,'pt-BR'));
  const el=$('tGeral');
- if(!el.querySelector('thead')){
-  el.innerHTML=`<thead><tr>${GERAL_COLUNAS.map(c=>`<th class="${c.num?'c-num':''}">${esc(c.titulo)}</th>`).join('')}</tr><tr class="filtros">${GERAL_COLUNAS.map(c=>c.num?'<th></th>':`<th><input type="search" data-col="${c.id}" placeholder="Filtrar…" aria-label="Filtrar ${esc(c.titulo)}"></th>`).join('')}</tr></thead><tbody></tbody><tfoot></tfoot>`;
-  let t;el.querySelector('thead').addEventListener('input',e=>{const inp=e.target.closest('input[data-col]');if(!inp)return;geralFiltros[inp.dataset.col]=norm(inp.value);clearTimeout(t);t=setTimeout(pintarGeral,150)});
+ if(!el.querySelector('thead')||!el.querySelector('input[data-de]')){
+  el.innerHTML=`<thead><tr>${GERAL_COLUNAS.map(c=>`<th class="${c.num?'c-num':''}">${esc(c.titulo)}</th>`).join('')}</tr><tr class="filtros">${GERAL_COLUNAS.map(c=>c.num?'<th></th>':c.data?`<th class="f-data"><input type="date" data-de aria-label="Data inicial" title="De"><input type="date" data-ate aria-label="Data final" title="Até"></th>`:`<th><input type="search" data-col="${c.id}" placeholder="Filtrar…" aria-label="Filtrar ${esc(c.titulo)}"></th>`).join('')}</tr></thead><tbody></tbody><tfoot></tfoot>`;
+  let t;const head=el.querySelector('thead');
+  head.addEventListener('input',e=>{const inp=e.target;
+   if(inp.matches('input[data-col]'))geralFiltros[inp.dataset.col]=norm(inp.value);
+   else if(inp.matches('input[data-de]'))geralDe=inp.value;
+   else if(inp.matches('input[data-ate]'))geralAte=inp.value;
+   else return;
+   clearTimeout(t);t=setTimeout(pintarGeral,150)});
  }
  pintarGeral();
 }
 function pintarGeral(){
  const el=$('tGeral');const ativos=Object.entries(geralFiltros).filter(([,v])=>v);
- const visiveis=ativos.length?geralLinhas.filter(l=>ativos.every(([c,v])=>norm(l[c]).includes(v))):geralLinhas;
+ const visiveis=geralLinhas.filter(l=>(!geralDe||l.iso>=geralDe)&&(!geralAte||l.iso<=geralAte)&&ativos.every(([c,v])=>norm(l[c]).includes(v)));
  const total=visiveis.reduce((s,l)=>s+l.q,0);
- el.querySelector('tbody').innerHTML=visiveis.slice(0,GERAL_LIMITE).map(l=>`<tr><td><span class="marca-pill ${l.cls}">${esc(l.marca)}</span></td><td class="c-vend">${esc(l.vend)}</td><td>${esc(l.mat)}</td><td><span class="tipo-tag">${esc(l.tipo)}</span></td><td>${esc(l.rep)}</td><td>${esc(l.cli)}</td><td class="c-num">${fmt(l.q)}</td></tr>`).join('')||`<tr><td colspan="7" class="vazio">Nenhum registro para os filtros.</td></tr>`;
+ el.querySelector('tbody').innerHTML=visiveis.slice(0,GERAL_LIMITE).map(l=>`<tr><td class="c-data">${esc(l.data)}</td><td><span class="marca-pill ${l.cls}">${esc(l.marca)}</span></td><td class="c-vend">${esc(l.vend)}</td><td>${esc(l.mat)}</td><td><span class="tipo-tag">${esc(l.tipo)}</span></td><td>${esc(l.rep)}</td><td>${esc(l.cli)}</td><td class="c-num">${fmt(l.q)}</td></tr>`).join('')||`<tr><td colspan="8" class="vazio">Nenhum registro para os filtros.</td></tr>`;
  const aviso=visiveis.length>GERAL_LIMITE?` · mostrando ${fmt(GERAL_LIMITE)} de ${fmt(visiveis.length)} linhas (use os filtros)`:` · ${fmt(visiveis.length)} linhas`;
- el.querySelector('tfoot').innerHTML=`<tr><td colspan="6">Total${brandFilter!=='todas'?' · '+esc(brandFilter):''}${aviso}</td><td class="c-num">${fmt(total)}</td></tr>`;
+ el.querySelector('tfoot').innerHTML=`<tr><td colspan="7">Total${brandFilter!=='todas'?' · '+esc(brandFilter):''}${aviso}</td><td class="c-num">${fmt(total)}</td></tr>`;
 }
 setupBrandToggles();
 

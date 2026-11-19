@@ -403,8 +403,63 @@ body[data-theme="dark"]{
 @media(max-width:700px){.brand-toggle{width:100%;justify-content:space-between}.c-bar{width:150px;min-width:130px}}
 /* Geral: textos longos quebram linha para a quantidade caber na tela */
 .rel-geral td{white-space:normal;line-height:1.35}
-.rel-geral td:nth-child(1),.rel-geral td:nth-child(4),.rel-geral td:nth-child(7){white-space:nowrap}
-.rel-geral td:nth-child(2){min-width:170px}
-.rel-geral td:nth-child(3){min-width:180px}
-.rel-geral td:nth-child(6){min-width:200px}
-.rel-geral th:nth-child(7),.rel-geral td:nth-child(7){width:110px}
+
+/* ============================================================
+   V17 — Resumo por marca no formato planilha, detalhe por
+   artigo e data no Relatório Geral
+   ============================================================ */
+/* Sem rolagem: a tabela aparece inteira */
+.tablewrap.sem-scroll{max-height:none!important;overflow:visible!important}
+.tablewrap.sem-scroll th{position:static}
+.tablewrap.sem-scroll tfoot td{position:static}
+
+.rel-planilha{font-size:13px}
+.rel-planilha thead th{padding:10px 12px;background:var(--text);color:var(--card);border:0}
+.rel-planilha thead th:first-child{border-radius:10px 0 0 0}
+.rel-planilha thead th:last-child{border-radius:0 10px 0 0}
+.rel-planilha td{padding:6px 12px!important;border-bottom:1px solid color-mix(in srgb,var(--border) 70%,transparent)}
+.rel-planilha tr.m-4k td{background:color-mix(in srgb,var(--m4k-soft) 85%,transparent)}
+.rel-planilha tr.m-luara td{background:color-mix(in srgb,var(--mlu-soft) 90%,transparent)}
+.rel-planilha tr.m-outras td{background:var(--mout-soft)}
+.rel-planilha tbody tr:hover td{filter:brightness(.97)}
+body[data-theme="dark"] .rel-planilha tbody tr:hover td{filter:brightness(1.15)}
+.rel-planilha tr.inicio-marca td{border-top:2px solid var(--card)}
+.rel-planilha tr.m-4k td:first-child{box-shadow:inset 4px 0 0 var(--m4k)}
+.rel-planilha tr.m-luara td:first-child{box-shadow:inset 4px 0 0 var(--mlu)}
+.rel-planilha .marca-pill{padding:2px 9px;font-size:11px}
+.rel-planilha .vend-nome{font-weight:650}
+.vend-cod-mini{margin-left:8px;font:600 10.5px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted)}
+.rel-planilha .c-pct{color:var(--muted);font-weight:700}
+.rel-planilha tfoot td{padding:11px 12px!important}
+
+/* Barra de participação mais visível nas descrições */
+.rel-desc .pbar{height:10px}
+.rel-desc tbody tr{cursor:default}
+.rel-desc tbody tr:hover td{background:var(--soft)}
+
+/* Detalhe ao passar o mouse sobre um artigo */
+.desc-tip{position:fixed;z-index:60;width:340px;max-width:calc(100vw - 24px);padding:13px 14px 11px;border-radius:12px;background:var(--card);color:var(--text);border:1px solid var(--border);box-shadow:0 18px 44px rgba(7,24,49,.28);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+.desc-tip.on{opacity:1;transform:none}
+.desc-tip .tip-titulo{font-weight:800;font-size:13px;line-height:1.3}
+.desc-tip .tip-sub{margin:2px 0 9px;font-size:11px;color:var(--muted)}
+.desc-tip table{width:100%;border-collapse:collapse;font-size:12px}
+.desc-tip td{padding:4px 0;border:0;white-space:nowrap}
+.desc-tip td:first-child{max-width:150px;overflow:hidden;text-overflow:ellipsis;padding-right:8px}
+.desc-tip .tip-bar{width:42%;padding-right:8px}
+.desc-tip .tip-bar .pbar{width:100%;height:7px;margin:0}
+.desc-tip .c-num{width:36px;font-weight:700}
+.tip-dot{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--mout);vertical-align:middle}
+.tip-dot.m-4k{background:var(--m4k)}
+.tip-dot.m-luara{background:var(--mlu)}
+.desc-tip .tip-rodape{margin-top:8px;padding-top:7px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+
+/* Relatório Geral: data */
+.rel-geral .c-data{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600}
+.rel-geral thead tr.filtros th.f-data{display:flex;flex-direction:column;gap:4px;min-width:128px}
+.rel-geral thead tr.filtros th.f-data input{min-width:0;height:27px;padding:0 6px;font-size:11px}
+.rel-geral td:nth-child(1),.rel-geral td:nth-child(2),.rel-geral td:nth-child(5),.rel-geral td:nth-child(8){white-space:nowrap}
+.rel-geral td:nth-child(4),.rel-geral td:nth-child(7){white-space:normal}
+.rel-geral td:nth-child(3){min-width:170px}
+.rel-geral td:nth-child(6){min-width:150px}
+.rel-geral td:nth-child(7){min-width:190px}
+.rel-geral td:nth-child(4){min-width:190px}

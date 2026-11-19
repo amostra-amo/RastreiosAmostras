@@ -577,3 +577,39 @@ body.av-tem-alteracoes .users-panel {
     outline: 2px solid var(--primary-light);
     outline-offset: 2px;
 }
+
+
+/* ---------------- Acesso padrão de vendedora ---------------- */
+
+.av-chip-padrao {
+    color: #c5d3e6;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px dashed rgba(197, 211, 230, 0.4);
+}
+
+
+/* ---------------- Botão Sair na barra do topo ---------------- */
+
+.av-btn-sair {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 36px;
+    margin-left: 10px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.av-btn-sair:hover {
+    color: #ffffff;
+    background: #dc2626;
+    border-color: #dc2626;
+}

@@ -43,8 +43,33 @@
         );
     }
 
-    function linhaTemAcesso(tr) {
+    // Quem tem código de vendedora já acessa o Rastreio,
+    // mesmo sem nenhuma permissão extra marcada.
+    function linhaTemCodigo(tr) {
+        const codigo = String(tr.dataset.codigo || "").trim();
+        return Boolean(codigo) && codigo !== "-";
+    }
+
+    function linhaTemPermissaoExtra(tr) {
         return Boolean(tr.querySelector("input[type='checkbox']:checked"));
+    }
+
+    function linhaTemAcesso(tr) {
+        return linhaTemCodigo(tr) || linhaTemPermissaoExtra(tr);
+    }
+
+    // Vendedora sem permissões extras mostra "Rastreio · padrão";
+    // "Sem acesso" fica só para quem não tem código nem permissão.
+    function ajustarResumoLinha(tr) {
+        const resumo = tr.querySelector(".active-permissions");
+        if (!resumo) return;
+
+        if (!linhaTemPermissaoExtra(tr) && linhaTemCodigo(tr)) {
+            resumo.innerHTML = `
+                <span class="av-chip av-chip-padrao" title="Acesso padrão: toda vendedora com código acessa o Rastreio">
+                    Rastreio · padrão
+                </span>`;
+        }
     }
 
     function linhaEhAdmin(tr) {
@@ -83,6 +108,44 @@
                         </span>`).join("")}
                 </div>`;
         };
+    }
+
+
+    if (typeof window.atualizarResumoPermissoesLinha === "function") {
+        const resumoOriginal = window.atualizarResumoPermissoesLinha;
+        window.atualizarResumoPermissoesLinha = function (linha) {
+            const resultado = resumoOriginal.apply(this, arguments);
+            if (linha) ajustarResumoLinha(linha);
+            return resultado;
+        };
+    }
+
+
+    /* ---------------- ordem: código de vendedora A-Z ---------------- */
+
+    function ordenarPorCodigo() {
+        const container = document.getElementById("listaUsuarios");
+        if (!container) return;
+
+        const linhas = linhasUsuarios();
+        const chave = tr => {
+            // sem código vai para o fim
+            const codigo = linhaTemCodigo(tr) ? String(tr.dataset.codigo).toUpperCase() : "\uffff";
+            const nome = (tr.querySelector(".user-information strong")?.textContent || "").trim();
+            return [codigo, nome];
+        };
+
+        const ordenadas = [...linhas].sort((a, b) => {
+            const [ca, na] = chave(a);
+            const [cb, nb] = chave(b);
+            return ca.localeCompare(cb, "pt-BR", { numeric: true }) ||
+                   na.localeCompare(nb, "pt-BR");
+        });
+
+        // Só mexe na tabela se a ordem mudou
+        if (ordenadas.some((tr, i) => tr !== linhas[i])) {
+            ordenadas.forEach(tr => container.appendChild(tr));
+        }
     }
 
 
@@ -182,7 +245,7 @@
             ["todos", "Usuários", "av-card-azul", ICONES.usuarios, "Mostrar todos"],
             ["online", "Online agora", "av-card-verde", ICONES.online, "Mostrar só quem está online"],
             ["admin", "Administradores", "av-card-roxo", ICONES.admin, "Mostrar quem tem acesso ao Admin"],
-            ["sem-acesso", "Sem acesso", "av-card-laranja", ICONES.semAcesso, "Mostrar quem ainda não tem permissão"]
+            ["sem-acesso", "Sem acesso", "av-card-laranja", ICONES.semAcesso, "Mostrar quem não tem código de vendedora nem permissão"]
         ].map(([filtro, rotulo, cor, icone, dica]) => `
             <button type="button" class="av-card ${cor}" data-filtro="${filtro}" title="${dica}">
                 <span class="av-card-texto">
@@ -304,6 +367,7 @@
 
     function aposCarregar() {
         linhasUsuarios().forEach(melhorarLinha);
+        ordenarPorCodigo();
         statusEmUmaLinha();
         atualizarCartoes();
         aplicarFiltro();
@@ -323,6 +387,8 @@
         const presencaOriginal = window.atualizarPresencaAdmin;
         window.atualizarPresencaAdmin = function (...args) {
             return Promise.resolve(presencaOriginal.apply(this, args)).then(resultado => {
+                // a presença reordena por online; voltamos para código A-Z
+                ordenarPorCodigo();
                 statusEmUmaLinha();
                 atualizarCartoes();
                 aplicarFiltro();

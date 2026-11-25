@@ -3066,9 +3066,10 @@ function agruparPorRastreio(lista) {
 
     lista.forEach(l => {
 
+        // Sem código: um card por nota/pedido (antes todas viravam um card só).
         const rastreio =
             l[1] ||
-            "SEM_RASTREIO";
+            `SEM_RASTREIO|${l[0] || ""}|${l[14] || ""}`;
 
 
         if (!mapa[rastreio]) {

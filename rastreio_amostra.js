@@ -599,6 +599,7 @@ function obterSituacaoLinha(linha) {
 
 function obterDescricaoLinha(linha) {
     const codigo = normalizarCodigoRastreio(linha?.[1]);
+    if (!codigo) return "Nota emitida · aguardando código de rastreio";
     const status = obterStatusLocal(codigo);
 
     if (status) return descricaoStatusCorreios(status);

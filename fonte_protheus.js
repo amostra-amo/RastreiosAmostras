@@ -105,9 +105,10 @@
         document.body.appendChild(el);
     }
 
-    // Botão "Pacotes" (vincular notas do mesmo pacote): só para a tela Admin.
+    // "Pacotes" (vincular notas do mesmo pacote): item discreto no menu
+    // lateral, só para quem tem a tela Admin.
     async function botaoPacotes() {
-        if (document.getElementById("btn-pacotes") || !/rastreio_amostra/.test(location.pathname)) return;
+        if (document.getElementById("menu-pacotes") || !/rastreio_amostra/.test(location.pathname)) return;
         if (!tokenSessao()) return;
         try {
             const r = await fetchAnterior(BACKEND + "/rastreios/vinculos", {
@@ -115,16 +116,34 @@
             });
             if (!r.ok) return;
         } catch (erro) { return; }
-        const a = document.createElement("a");
-        a.id = "btn-pacotes";
-        a.href = "pacotes.html";
-        a.textContent = "📦 Pacotes";
-        a.title = "Vincular notas enviadas no mesmo pacote";
-        a.style.cssText =
-            "position:fixed;right:12px;bottom:44px;z-index:99999;padding:8px 14px;border-radius:999px;" +
-            "background:#0b3d91;color:#fff;font:600 13px/1.2 system-ui,sans-serif;text-decoration:none;" +
-            "box-shadow:0 4px 14px rgba(11,61,145,.25)";
-        document.body.appendChild(a);
+
+        const icone = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"></path><path d="M3 8l9 5 9-5M12 13v8"></path></svg>';
+        const ir = evento => { evento.preventDefault(); evento.stopPropagation(); location.href = "pacotes.html"; };
+
+        const trilho = document.querySelector(".sidebar-video-rail-nav");
+        if (trilho) {
+            const b = document.createElement("button");
+            b.id = "menu-pacotes";
+            b.type = "button";
+            b.className = "sidebar-video-rail-btn";
+            b.title = "Pacotes";
+            b.setAttribute("aria-label", "Pacotes");
+            b.innerHTML = icone;
+            b.addEventListener("click", ir);
+            trilho.appendChild(b);
+        }
+
+        const painel = document.querySelector(".sidebar-video-panel-nav");
+        if (painel) {
+            const b = document.createElement("button");
+            b.type = "button";
+            b.className = "sidebar-video-panel-item";
+            b.innerHTML = `<span class="sidebar-video-icon">${icone}</span>
+                <span class="sidebar-video-item-text"><strong>Pacotes</strong><small>Notas no mesmo pacote</small></span>
+                <span class="sidebar-video-arrow">›</span>`;
+            b.addEventListener("click", ir);
+            painel.appendChild(b);
+        }
     }
 
     // Os dados da tela de rastreio vêm do login (sessionStorage). Depois de

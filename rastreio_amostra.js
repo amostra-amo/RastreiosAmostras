@@ -2602,6 +2602,21 @@ function filtrar() {
 
             });
 
+
+        // Pacote com várias notas: ao achar uma nota, traz as outras
+        // notas do mesmo código de rastreio para o mesmo card.
+        const codigosEncontrados =
+            new Set(lista.map(l => l[1]).filter(Boolean));
+
+        if (codigosEncontrados.size) {
+            const jaNaLista = new Set(lista);
+            dadosVendedora.forEach(l => {
+                if (l[1] && codigosEncontrados.has(l[1]) && !jaNaLista.has(l)) {
+                    lista.push(l);
+                }
+            });
+        }
+
     }
 
 

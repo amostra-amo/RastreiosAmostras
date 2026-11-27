@@ -216,6 +216,7 @@
             try {
                 await api("/" + item.nf, { method: "DELETE" });
                 mostrarToast(`NF ${item.nf} saiu do pacote.`);
+                sessionStorage.setItem("pacotesAlterados", "1");
                 carregarLista();
             } catch (erro) { mostrarToast(erro.message); botao.disabled = false; return; }
         }
@@ -230,6 +231,7 @@
         try {
             await api("", { method: "POST", body: JSON.stringify({ nf_principal: principal.nf, nfs: novas }) });
             mostrarToast(`Pacote da NF ${principal.nf} salvo.`);
+            sessionStorage.setItem("pacotesAlterados", "1");
             limpar();
             carregarLista();
         } catch (erro) {
@@ -309,6 +311,7 @@
         try {
             await api("/" + botao.dataset.nf, { method: "DELETE" });
             mostrarToast(`NF ${botao.dataset.nf} saiu do pacote.`);
+            sessionStorage.setItem("pacotesAlterados", "1");
             carregarLista();
         } catch (erro) {
             mostrarToast(erro.message);

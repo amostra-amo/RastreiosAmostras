@@ -127,7 +127,43 @@
         document.body.appendChild(a);
     }
 
+    // Os dados da tela de rastreio vêm do login (sessionStorage). Depois de
+    // alterar um pacote, ou a cada 15 min, busca os dados novos e atualiza as
+    // MESMAS notas do usuário (mesmo escopo do login). Recarrega 1x se mudou.
+    async function atualizarDadosDaSessao() {
+        if (!/rastreio_amostra/.test(location.pathname) || !tokenSessao() || !window.Papa) return;
+        const armazenamento = sessionStorage.getItem("dadosFiltrados") ? sessionStorage
+            : (localStorage.getItem("dadosFiltrados") ? localStorage : null);
+        if (!armazenamento) return;
+        const ultima = Number(sessionStorage.getItem("protheusAtualizadoEm") || 0);
+        const alterado = sessionStorage.getItem("pacotesAlterados") === "1";
+        if (!alterado && Date.now() - ultima < 15 * 60 * 1000) return;
+        try {
+            const atuais = JSON.parse(armazenamento.getItem("dadosFiltrados") || "[]");
+            const notas = new Set(atuais.map(l => String(l[0] || "").trim()));
+            const r = await fetchAnterior(ENDPOINT + "?t=" + Date.now(), {
+                cache: "no-store", headers: { Authorization: "Bearer " + tokenSessao() }
+            });
+            if (!r.ok) return;
+            const linhas = window.Papa.parse(await r.text(), { skipEmptyLines: true }).data.slice(1);
+            const novas = linhas.filter(l => notas.has(String(l[0] || "").trim()));
+            sessionStorage.setItem("protheusAtualizadoEm", String(Date.now()));
+            sessionStorage.removeItem("pacotesAlterados");
+            if (!novas.length) return;
+            const assinatura = ls => JSON.stringify(ls.map(l => [l[0], l[1], l[5], l[13], l[14], l[15]]).sort());
+            if (assinatura(novas) !== assinatura(atuais)) {
+                armazenamento.setItem("dadosFiltrados", JSON.stringify(novas));
+                console.log("[PROTHEUS] Dados atualizados; recarregando a tela.");
+                location.reload();
+            }
+        } catch (erro) {
+            console.warn("[PROTHEUS] Não foi possível atualizar os dados da sessão:", erro);
+        }
+    }
+
     instalarPapa();
-    document.addEventListener("DOMContentLoaded", () => { instalarPapa(); selo(); botaoPacotes(); });
+    document.addEventListener("DOMContentLoaded", () => {
+        instalarPapa(); selo(); botaoPacotes(); atualizarDadosDaSessao();
+    });
     window.addEventListener("load", instalarPapa);
 })();

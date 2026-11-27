@@ -105,7 +105,29 @@
         document.body.appendChild(el);
     }
 
+    // Botão "Pacotes" (vincular notas do mesmo pacote): só para a tela Admin.
+    async function botaoPacotes() {
+        if (document.getElementById("btn-pacotes") || !/rastreio_amostra/.test(location.pathname)) return;
+        if (!tokenSessao()) return;
+        try {
+            const r = await fetchAnterior(BACKEND + "/rastreios/vinculos", {
+                cache: "no-store", headers: { Authorization: "Bearer " + tokenSessao() }
+            });
+            if (!r.ok) return;
+        } catch (erro) { return; }
+        const a = document.createElement("a");
+        a.id = "btn-pacotes";
+        a.href = "pacotes.html";
+        a.textContent = "📦 Pacotes";
+        a.title = "Vincular notas enviadas no mesmo pacote";
+        a.style.cssText =
+            "position:fixed;right:12px;bottom:44px;z-index:99999;padding:8px 14px;border-radius:999px;" +
+            "background:#0b3d91;color:#fff;font:600 13px/1.2 system-ui,sans-serif;text-decoration:none;" +
+            "box-shadow:0 4px 14px rgba(11,61,145,.25)";
+        document.body.appendChild(a);
+    }
+
     instalarPapa();
-    document.addEventListener("DOMContentLoaded", () => { instalarPapa(); selo(); });
+    document.addEventListener("DOMContentLoaded", () => { instalarPapa(); selo(); botaoPacotes(); });
     window.addEventListener("load", instalarPapa);
 })();

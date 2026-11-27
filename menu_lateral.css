@@ -1,0 +1,60 @@
+/* =========================================================
+   MENU LATERAL PADRÃO (mesmo visual do Relatório Consolidados)
+   Usado em: analytics, rankprod, retorno_amostras, admin, pacotes.
+   O menu antigo de cada página fica escondido; a lógica das páginas
+   não é alterada.
+   ========================================================= */
+html.usa-menu-4k aside.sidebar:not(.menu-4k){display:none!important}
+html.usa-menu-4k .overlay-sidebar{display:none!important}
+html.usa-menu-4k .app-layout .main-content{margin-left:0!important;width:100%!important}
+
+.menu-4k,.menu-4k *{box-sizing:border-box}
+.menu-4k{
+  position:fixed;z-index:100000;top:0;bottom:0;left:-340px;width:306px;
+  display:flex;flex-direction:column;gap:0;padding:0;margin:0;
+  font-family:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;
+  background:linear-gradient(165deg,#FFFFFF 0%,#F5F8FD 58%,#EDF3FA 100%);
+  color:#152B48;border-right:1px solid #DCE5EF;box-shadow:14px 0 48px rgba(11,31,58,.12);
+  overflow-y:auto;scrollbar-width:thin;scrollbar-color:#B5C6D9 transparent;
+  transition:left .25s ease;text-align:left
+}
+.menu-4k.open{left:0}
+.menu-4k-shade{display:none;position:fixed;inset:0;background:rgba(8,20,38,.45);z-index:99999}
+.menu-4k-shade.open{display:block}
+
+.menu-4k .m4-head{display:flex;align-items:center;gap:12px;padding:26px 18px 22px;border-bottom:1px solid #DCE5EF;margin-bottom:17px}
+.menu-4k .m4-logo{position:relative;width:45px;height:45px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(145deg,#2563eb,#60a5fa);box-shadow:0 6px 20px rgba(37,99,235,.35);font-size:21px;font-weight:900;letter-spacing:-1px;color:#fff;flex:none}
+.menu-4k .m4-logo i{position:absolute;width:6px;height:6px;border-radius:50%;background:#a7f3d0;right:6px;top:6px}
+.menu-4k .m4-brand{display:flex;flex-direction:column;gap:3px;min-width:0}
+.menu-4k .m4-brand strong{font-size:15px;letter-spacing:.9px;color:#102743}
+.menu-4k .m4-brand small{font-size:11px;color:#637C9B}
+.menu-4k button.m4-close{margin-left:auto;width:auto;padding:3px 8px;border:0;border-radius:8px;font-size:26px;line-height:1;color:#587390;background:transparent;cursor:pointer}
+.menu-4k button.m4-close:hover{background:#E7EFF9;color:#153D6A}
+
+.menu-4k .m4-label{padding:5px 24px 10px;font-size:10px;font-weight:800;letter-spacing:1.5px;color:#647D9C}
+.menu-4k .m4-label.m4-gap{margin-top:22px}
+.menu-4k .m4-nav{display:flex;flex-direction:column;gap:5px;padding:0 13px}
+.menu-4k .m4-nav a{display:flex;align-items:center;gap:12px;min-height:44px;padding:10px 12px;border:1px solid transparent;border-radius:11px;color:#284462;background:transparent;font-size:12.5px;font-weight:550;text-decoration:none;transition:background .16s,color .16s,transform .16s}
+.menu-4k .m4-nav a:hover{background:#E5EEFD;color:#12439B;transform:translateX(2px)}
+.menu-4k .m4-nav a.active{background:linear-gradient(90deg,#DCEAFF,#EDF4FF);border-color:#BFD5FC;color:#174EAB;box-shadow:inset 3px 0 #2563EB}
+.menu-4k .m4-ico{width:28px;height:28px;flex:none;display:grid;place-items:center;border-radius:8px;background:#E7EFF9;color:#285B9D;font-size:18px;font-weight:600}
+.menu-4k .m4-nav a.active .m4-ico{background:#2563EB;color:#fff}
+.menu-4k .m4-arrow{margin-left:auto;font-size:20px;color:#829BB8}
+
+.menu-4k .m4-card{display:flex;flex-direction:column;gap:9px;margin:4px 13px 16px;padding:15px;border:1px solid #D2E1F5;border-radius:13px;background:linear-gradient(145deg,#F2F7FE,#E9F1FD)}
+.menu-4k .m4-card-head{display:flex;align-items:center;gap:8px}
+.menu-4k .m4-dot{width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.14)}
+.menu-4k .m4-card-title{font-size:10px;font-weight:800;color:#365675;letter-spacing:1px}
+.menu-4k .m4-card-text{font-size:11px;color:#536F8D;line-height:1.6}
+.menu-4k .m4-card-text b{color:#244464}
+
+.menu-4k .m4-bottom{margin-top:auto;padding:16px 13px 20px;border-top:1px solid #DCE5EF}
+.menu-4k .m4-caption{padding:0 11px 12px;font-size:9px;letter-spacing:1.1px;color:#647D9C}
+.menu-4k button.m4-logout{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin:0;color:#B33142;border:1px solid #F3CDD1;background:#FFF1F2;border-radius:11px;font-weight:600;font-size:12.5px;cursor:pointer;text-align:left}
+.menu-4k button.m4-logout:hover{background:#FFE4E7}
+.menu-4k button.m4-logout .m4-ico{background:#FDE2E5;color:#B33142}
+
+/* Botão ☰ criado apenas em páginas que não têm um */
+.m4-abrir{position:fixed;top:14px;left:14px;z-index:9000;width:42px;height:42px;border-radius:12px;border:1px solid #D7E3F2;background:#fff;color:#174EAB;font-size:20px;cursor:pointer;box-shadow:0 4px 14px rgba(11,31,58,.12)}
+
+@media(max-width:420px){.menu-4k{width:min(306px,88vw);left:-100vw}}

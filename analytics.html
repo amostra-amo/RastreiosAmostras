@@ -10,9 +10,10 @@
     <meta charset="UTF-8" />
     <title>Analytics Amostra</title>
     <link rel="stylesheet" href="analises.css" />
+    <link rel="stylesheet" href="menu_lateral.css">
 </head>
 
-<body class="tema-quatrok">
+<body class="tema-quatrok carregando-envios carregando-devolucoes">
 
 <div class="layout-app">
 
@@ -97,7 +98,7 @@
 
         <div class="logo-area"><img src="/Imagens/4k BRANCO.png" alt="Logo 4K"></div>
         <h1 class="titulo-sistema">Análise | Envio de Amostras</h1>
-        <div class="status-correios-topo" id="statusCorreiosTopo" role="status" aria-live="polite"><span class="status-topo-ponto"></span><span id="avisoDevolucao">Aguardando consulta aos Correios...</span></div>
+        <div class="status-correios-topo" id="statusCorreiosTopo" role="status" aria-live="polite"><span class="status-topo-ponto"></span><span id="avisoDevolucao">Carregando dados do Protheus…</span><span class="status-topo-barra"><i id="barraCorreios"></i></span></div>
 
         
 
@@ -246,5 +247,6 @@
             window.location.href = "tela_inicio.html";
         }
     </script>
+    <script src="menu_lateral.js"></script>
 </body>
 </html>

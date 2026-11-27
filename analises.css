@@ -1029,3 +1029,28 @@ body{background:#f2f5fa} .conteudo-central{min-width:0}
 .env-historico-head .env-search input{width:100%}
 @media(max-width:1000px){.topo-analises{grid-template-columns:1fr auto!important}.topo-analises .titulo-sistema{grid-column:1/-1;grid-row:2}.status-correios-topo{grid-column:2;grid-row:1}.topo-analises .logo-area{left:70px;top:24px}}
 @media(max-width:650px){.topo-analises{padding:10px!important}.topo-analises .logo-area{display:none}.topo-analises .titulo-sistema{font-size:15px}.status-correios-topo{font-size:10px;max-width:190px}.env-historico-head{flex-direction:column;align-items:stretch}.env-historico-head .env-search{max-width:none;min-width:0;flex:auto}}
+
+/* ===== Carregamento explícito (mesmo padrão do Relatório Consolidados) ===== */
+@keyframes an-brilho{0%{background-position:-240px 0}100%{background-position:240px 0}}
+@keyframes an-pulso{0%,100%{opacity:1}50%{opacity:.35}}
+.bloco-carregando,
+body.carregando-envios .env-kpis .dash-kpi strong,
+body.carregando-devolucoes #painelDevolucoesAnalytics .dash-kpi strong{
+  display:block;color:transparent!important;border-radius:8px;min-height:30px;width:72%;
+  background:linear-gradient(90deg,#e8eef6 0px,#f5f8fc 120px,#e8eef6 240px);background-size:480px 100%;
+  animation:an-brilho 1.2s linear infinite
+}
+.bloco-carregando{min-height:12px;width:80%}
+.linha-carregando td{padding:13px 10px}
+body.carregando-envios #graficoPrincipalEnvios,
+body.carregando-devolucoes #graficoPrincipalDevolucoes{
+  min-height:220px;border-radius:12px;
+  background:linear-gradient(90deg,#eef3f9 0px,#f8fafd 160px,#eef3f9 320px);background-size:640px 100%;
+  animation:an-brilho 1.4s linear infinite
+}
+body.carregando-envios .status-topo-ponto,
+.status-correios-topo:not(.status-finalizado):not(.status-falha) .status-topo-ponto{animation:an-pulso 1s ease-in-out infinite}
+.status-correios-topo{position:relative;overflow:hidden}
+.status-topo-barra{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.12)}
+.status-topo-barra i{display:block;height:100%;width:0;background:linear-gradient(90deg,#60a5fa,#a7f3d0);transition:width .4s ease}
+.status-finalizado .status-topo-barra{opacity:0;transition:opacity .8s 1.2s}

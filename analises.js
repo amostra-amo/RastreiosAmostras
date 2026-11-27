@@ -37,13 +37,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
+// Enquanto o Protheus responde, a tabela mostra linhas "fantasma" (igual ao Consolidados).
+(function linhasCarregando() {
+    if (!tabela) return;
+    tabela.innerHTML = Array.from({length:8}, () =>
+        '<tr class="linha-carregando">' + '<td><span class="bloco-carregando"></span></td>'.repeat(8) + '</tr>').join('');
+})();
+function definirProgressoCorreios(percentual) {
+    const barra = document.getElementById('barraCorreios');
+    if (barra) barra.style.width = `${Math.max(0, Math.min(100, percentual))}%`;
+}
+definirProgressoCorreios(8);
+
 Papa.parse(url, {
     download: true,
     skipEmptyLines: true,
     complete: res => {
         dadosGlobais = res.data.slice(1);
+        document.body.classList.remove('carregando-envios');
         renderizarTabela(dadosGlobais);
         iniciarConsultaDevolucoesCorreios();
+    },
+    error: erro => {
+        console.error('Protheus', erro);
+        document.body.classList.remove('carregando-envios', 'carregando-devolucoes');
+        if (tabela) tabela.innerHTML = '';
+        atualizarAvisoDevolucoes('Falha ao carregar os dados do Protheus. Atualize a página.');
     }
 });
 
@@ -1006,16 +1025,64 @@ async function iniciarConsultaDevolucoesCorreios() {
     if (consultaDevolucoesEmAndamento) return;
     consultaDevolucoesEmAndamento = true;
     const codigos = [...new Set(dadosGlobais.map(l => normalizarCodigoCorreios(l[1])).filter(c => /^[A-Z]{2}\d{9}[A-Z]{2}$/.test(c)))];
-    if (!codigos.length) { consultaDevolucoesEmAndamento = false; consultaDevolucoesConcluida = true; atualizarAvisoDevolucoes('Nenhum código de rastreio válido encontrado na planilha.'); renderizarDevolucoes(); return; }
+    if (!codigos.length) { consultaDevolucoesEmAndamento = false; consultaDevolucoesConcluida = true; document.body.classList.remove('carregando-devolucoes'); definirProgressoCorreios(100); atualizarAvisoDevolucoes('Nenhum código de rastreio válido encontrado na planilha.'); renderizarDevolucoes(); return; }
     let cache = {};
     try { cache = JSON.parse(localStorage.getItem(CACHE_DEVOLUCOES_CORREIOS) || '{}') || {}; } catch (_) {}
     for (const codigo of codigos) if (cache[codigo]) statusDevolucoesCorreios.set(codigo, cache[codigo]);
     renderizarDevolucoes();
-    atualizarAvisoDevolucoes(`Consultando Correios: 0/${codigos.length} rastreios. Resultados parciais.`);
-    let indice = 0, concluidos = 0, falhas = 0;
-    const trabalhadores = Array.from({length:Math.min(8,codigos.length)}, async () => {
-        while (indice < codigos.length) {
-            const codigo = codigos[indice++];
+    if (codigos.some(c => cache[c])) document.body.classList.remove('carregando-devolucoes');
+    definirProgressoCorreios(10);
+    atualizarAvisoDevolucoes(`Consultando Correios: 0/${codigos.length} rastreios…`);
+    let concluidos = 0, falhas = 0;
+    const guardar = (codigo, resumo) => {
+        const status = {...resumo, situacao:classificarDevolucaoCorreios(resumo)};
+        statusDevolucoesCorreios.set(codigo,status);
+        cache[codigo] = status;
+    };
+    const progresso = () => {
+        document.body.classList.remove('carregando-devolucoes');
+        definirProgressoCorreios(10 + 90 * concluidos / codigos.length);
+        atualizarAvisoDevolucoes(`Correios: ${concluidos}/${codigos.length} consultados${falhas ? ` · ${falhas} falhas` : ''}`);
+        renderizarDevolucoes();
+    };
+    // Consulta em lote: até 100 códigos por chamada, 3 chamadas em paralelo.
+    const LOTE = 100, PARALELO = 3;
+    const lotes = [];
+    for (let i = 0; i < codigos.length; i += LOTE) lotes.push(codigos.slice(i, i + LOTE));
+    const pendentesIndividuais = [];
+    let proximo = 0, loteIndisponivel = false;
+    const consultarLote = async (lote) => {
+        const controlador = new AbortController();
+        const temporizador = setTimeout(() => controlador.abort(), 90000);
+        try {
+            const resposta = await fetch(`${API_DEVOLUCOES_CORREIOS}/lote`, {
+                method:'POST', cache:'no-store', signal:controlador.signal,
+                headers:{'Content-Type':'application/json'}, body:JSON.stringify({codigos:lote})
+            });
+            if (resposta.status === 404 || resposta.status === 405) { loteIndisponivel = true; throw Error('lote indisponível'); }
+            if (!resposta.ok) throw Error(`HTTP ${resposta.status}`);
+            const dados = await resposta.json();
+            const resultados = dados?.resultados || {};
+            for (const codigo of lote) {
+                if (resultados[codigo]) guardar(codigo, resultados[codigo]);
+                else falhas++;
+                concluidos++;
+            }
+        } catch (erro) {
+            console.warn('Correios (lote)', erro);
+            pendentesIndividuais.push(...lote);
+        } finally { clearTimeout(temporizador); }
+        progresso();
+    };
+    await Promise.all(Array.from({length:Math.min(PARALELO,lotes.length)}, async () => {
+        while (proximo < lotes.length && !loteIndisponivel) await consultarLote(lotes[proximo++]);
+    }));
+    if (loteIndisponivel) while (proximo < lotes.length) pendentesIndividuais.push(...lotes[proximo++]);
+    // Reserva: códigos que o lote não conseguiu responder são consultados um a um.
+    let indice = 0;
+    const trabalhadores = Array.from({length:Math.min(8,pendentesIndividuais.length)}, async () => {
+        while (indice < pendentesIndividuais.length) {
+            const codigo = pendentesIndividuais[indice++];
             try {
                 const controlador = new AbortController();
                 const temporizador = setTimeout(() => controlador.abort(), 20000);
@@ -1025,21 +1092,18 @@ async function iniciarConsultaDevolucoesCorreios() {
                 if (!resposta.ok) throw Error(`HTTP ${resposta.status}`);
                 const dados = await resposta.json();
                 if (!dados?.sucesso || !dados?.resumo) throw Error('Resumo não disponível');
-                const status = {...dados.resumo, situacao:classificarDevolucaoCorreios(dados.resumo)};
-                statusDevolucoesCorreios.set(codigo,status);
-                cache[codigo] = status;
+                guardar(codigo, dados.resumo);
             } catch (erro) { falhas++; console.warn('Correios',codigo,erro); }
             concluidos++;
-            if (concluidos % 5 === 0 || concluidos === codigos.length) {
-                atualizarAvisoDevolucoes(`Correios: ${concluidos}/${codigos.length} consultados${falhas ? ` · ${falhas} falhas` : ''}`);
-                renderizarDevolucoes();
-            }
+            if (concluidos % 10 === 0 || indice >= pendentesIndividuais.length) progresso();
         }
     });
     await Promise.all(trabalhadores);
     try { localStorage.setItem(CACHE_DEVOLUCOES_CORREIOS,JSON.stringify(cache)); } catch (_) {}
     consultaDevolucoesConcluida = true;
     consultaDevolucoesEmAndamento = false;
+    document.body.classList.remove('carregando-devolucoes');
+    definirProgressoCorreios(100);
     atualizarAvisoDevolucoes(`Consulta concluída: ${codigos.length - falhas}/${codigos.length} rastreios verificados nos Correios${falhas ? ` · ${falhas} falhas` : ''}`);
     renderizarDevolucoes();
 }

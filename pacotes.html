@@ -4,177 +4,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pacotes com várias notas | Rastreio de Amostras</title>
+    <title>Pacotes | Rastreio de Amostras</title>
     <link rel="icon" type="image/svg+xml"
         href="data:image/svg+xml;charset=UTF-8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='78%' text-anchor='middle' font-size='70'>📦</text></svg>">
     <style>
         :root {
+            --tinta: #111827;
+            --texto: #374151;
+            --suave: #6b7280;
+            --linha: #e5e7eb;
+            --fundo: #f6f7f9;
+            --branco: #ffffff;
             --azul: #0b3d91;
-            --azul-claro: #7795f8;
-            --fundo: #eef2fb;
-            --texto: #1c2433;
-            --suave: #5b6578;
-            --borda: #d7deee;
-            --erro: #b42318;
-            --ok: #0f7b4b;
+            --azul-suave: #eaf0fb;
+            --verde: #067647;
+            --verde-suave: #ecfdf3;
+            --ambar: #b54708;
+            --ambar-suave: #fffaeb;
+            --vermelho: #b42318;
+            --vermelho-suave: #fef3f2;
+            --raio: 14px;
         }
 
         * { box-sizing: border-box; }
 
         body {
             margin: 0;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
             background: var(--fundo);
             color: var(--texto);
+            -webkit-font-smoothing: antialiased;
         }
 
-        header {
-            background: var(--azul);
-            color: #fff;
-            padding: 18px 28px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
+        /* ---------- Cabeçalho ---------- */
+        .topo { background: var(--branco); border-bottom: 1px solid var(--linha); }
+        .topo-conteudo { max-width: 760px; margin: 0 auto; padding: 22px 20px 20px; }
+
+        .voltar {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--suave); text-decoration: none; font-size: 13px; margin-bottom: 12px;
+        }
+        .voltar:hover { color: var(--azul); }
+
+        .topo h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--tinta); }
+        .topo p { margin: 6px 0 0; font-size: 14px; color: var(--suave); max-width: 560px; line-height: 1.5; }
+
+        main { max-width: 760px; margin: 0 auto; padding: 28px 20px 64px; }
+
+        /* ---------- Bloco do novo pacote ---------- */
+        .bloco { background: var(--branco); border: 1px solid var(--linha); border-radius: var(--raio); padding: 24px; }
+        .bloco + .titulo-secao { margin-top: 40px; }
+
+        .passo { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: var(--tinta); margin-bottom: 10px; }
+        .passo .numero {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: var(--azul-suave); color: var(--azul);
+            display: grid; place-items: center; font-size: 12px;
+        }
+        .passo-2 { margin-top: 28px; }
+        .oculto { display: none !important; }
+
+        .busca {
+            display: flex; align-items: center;
+            border: 1px solid var(--linha); border-radius: 12px; background: var(--branco);
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .busca:focus-within { border-color: var(--azul); box-shadow: 0 0 0 4px var(--azul-suave); }
+        .busca input {
+            flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
+            padding: 14px 16px; font: inherit; font-size: 17px; color: var(--tinta); letter-spacing: .02em;
+        }
+        .busca input::placeholder { color: #9ca3af; letter-spacing: 0; }
+        .busca button {
+            flex-shrink: 0; margin: 5px; border: 0; border-radius: 9px; background: var(--azul); color: #fff;
+            font: inherit; font-size: 14px; font-weight: 600; padding: 10px 18px; cursor: pointer;
+        }
+        .busca button:disabled { opacity: .5; cursor: default; }
+
+        .resumo { margin-top: 14px; border-radius: 12px; background: var(--fundo); padding: 16px 18px; display: grid; gap: 10px; }
+        .resumo-nf { font-size: 13px; color: var(--suave); }
+        .resumo-cliente { font-size: 16px; font-weight: 650; color: var(--tinta); margin-top: 2px; }
+        .resumo-detalhe { font-size: 13px; color: var(--suave); }
+
+        .etiquetas { display: flex; flex-wrap: wrap; gap: 6px; }
+        .etiqueta {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; border-radius: 999px; padding: 4px 10px;
+            background: var(--azul-suave); color: var(--azul); white-space: nowrap;
+        }
+        .etiqueta.verde { background: var(--verde-suave); color: var(--verde); }
+        .etiqueta.ambar { background: var(--ambar-suave); color: var(--ambar); }
+        .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: .02em; }
+
+        .aviso { font-size: 13px; border-radius: 10px; padding: 10px 12px; margin-top: 12px; line-height: 1.45; }
+        .aviso.erro { background: var(--vermelho-suave); color: var(--vermelho); }
+        .aviso.ambar { background: var(--ambar-suave); color: var(--ambar); }
+
+        /* ---------- Notas do pacote (chips) ---------- */
+        .campo-chips {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+            min-height: 54px; border: 1px solid var(--linha); border-radius: 12px;
+            padding: 8px 10px; cursor: text; transition: border-color .15s, box-shadow .15s;
+        }
+        .campo-chips:focus-within { border-color: var(--azul); box-shadow: 0 0 0 4px var(--azul-suave); }
+        .campo-chips input {
+            flex: 1; min-width: 140px; border: 0; outline: 0;
+            font: inherit; font-size: 15px; padding: 6px 4px; color: var(--tinta);
         }
 
-        header h1 { margin: 0; font-size: 20px; font-weight: 650; }
-        header a { color: #fff; text-decoration: none; font-size: 14px; opacity: .9; }
-        header a:hover { opacity: 1; text-decoration: underline; }
+        .chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            border-radius: 10px; padding: 6px 6px 6px 10px;
+            background: var(--fundo); border: 1px solid var(--linha);
+            font-size: 13px; line-height: 1.25;
+        }
+        .chip strong { color: var(--tinta); font-weight: 650; }
+        .chip small { display: block; color: var(--suave); font-size: 11px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .chip.erro { background: var(--vermelho-suave); border-color: #fecdca; }
+        .chip.erro small { color: var(--vermelho); }
+        .chip.ambar { background: var(--ambar-suave); border-color: #fedf89; }
+        .chip.ambar small { color: var(--ambar); }
 
-        main { max-width: 980px; margin: 0 auto; padding: 24px 20px 48px; }
+        .chip button, .nf-vinculada button {
+            border: 0; background: transparent; color: var(--suave);
+            width: 22px; height: 22px; border-radius: 6px; cursor: pointer; font-size: 14px; line-height: 1;
+        }
+        .chip button:hover, .nf-vinculada button:hover { background: #e5e7eb; color: var(--tinta); }
 
-        .cartao {
-            background: #fff;
-            border: 1px solid var(--borda);
-            border-radius: 12px;
-            padding: 20px 22px;
-            margin-bottom: 20px;
+        .dica { font-size: 12px; color: var(--suave); margin-top: 8px; }
+
+        .acoes { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 20px; }
+        .btn-principal {
+            border: 0; border-radius: 10px; background: var(--azul); color: #fff;
+            font: inherit; font-size: 14px; font-weight: 600; padding: 12px 22px; cursor: pointer;
+        }
+        .btn-principal:disabled { opacity: .45; cursor: default; }
+        .btn-secundario { border: 0; background: transparent; color: var(--suave); font: inherit; font-size: 14px; cursor: pointer; padding: 12px 6px; }
+        .btn-secundario:hover { color: var(--tinta); }
+
+        /* ---------- Lista ---------- */
+        .titulo-secao { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+        .titulo-secao h2 { margin: 0; font-size: 16px; font-weight: 650; color: var(--tinta); }
+        .titulo-secao h2 span { color: var(--suave); font-weight: 500; }
+
+        .filtro {
+            border: 1px solid var(--linha); border-radius: 10px; padding: 9px 12px;
+            font: inherit; font-size: 14px; width: 260px; background: var(--branco);
+        }
+        .filtro:focus { outline: 0; border-color: var(--azul); box-shadow: 0 0 0 4px var(--azul-suave); }
+
+        .pacotes { display: grid; gap: 10px; }
+        .pacote {
+            background: var(--branco); border: 1px solid var(--linha); border-radius: var(--raio);
+            padding: 16px 18px; display: grid; grid-template-columns: 1fr auto; gap: 10px 16px;
+        }
+        .pacote-nf { font-size: 15px; font-weight: 650; color: var(--tinta); }
+        .pacote-nf span { color: var(--suave); font-weight: 500; font-size: 12px; margin-left: 4px; }
+        .pacote-cliente { font-size: 13px; color: var(--suave); margin-top: 2px; }
+        .pacote-meta { grid-column: 1 / -1; font-size: 12px; color: #9ca3af; }
+
+        .vinculadas { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .vinculadas .rotulo { font-size: 12px; color: var(--suave); margin-right: 2px; }
+        .nf-vinculada {
+            display: inline-flex; align-items: center; gap: 2px;
+            border: 1px solid var(--linha); border-radius: 999px;
+            padding: 2px 4px 2px 10px; font-size: 13px; color: var(--tinta);
         }
 
-        .cartao h2 { margin: 0 0 4px; font-size: 16px; }
-        .cartao p.ajuda { margin: 0 0 16px; color: var(--suave); font-size: 14px; line-height: 1.45; }
-
-        .linha { display: grid; grid-template-columns: 220px 1fr auto; gap: 12px; align-items: end; }
-
-        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--suave); }
-
-        input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--borda);
-            border-radius: 8px;
-            font: inherit;
-            font-size: 15px;
+        .vazio {
+            text-align: center; padding: 40px 20px; color: var(--suave); font-size: 14px; line-height: 1.6;
+            border: 1px dashed var(--linha); border-radius: var(--raio); background: var(--branco);
         }
+        .vazio a { color: var(--azul); }
 
-        input:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul-claro); }
-
-        button {
-            border: 0;
-            border-radius: 8px;
-            padding: 10px 18px;
-            font: inherit;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            background: var(--azul);
-            color: #fff;
+        .toast {
+            position: fixed; left: 50%; bottom: 24px;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--tinta); color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 14px;
+            opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none;
         }
+        .toast.visivel { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        button:disabled { opacity: .55; cursor: default; }
-
-        button.remover {
-            background: transparent;
-            color: var(--erro);
-            padding: 4px 8px;
-            font-weight: 500;
-        }
-
-        button.remover:hover { text-decoration: underline; }
-
-        .conferencia {
-            margin-top: 12px;
-            font-size: 14px;
-            color: var(--suave);
-            min-height: 20px;
-        }
-
-        .conferencia strong { color: var(--texto); }
-
-        .mensagem { margin-top: 12px; font-size: 14px; min-height: 20px; }
-        .mensagem.erro { color: var(--erro); }
-        .mensagem.ok { color: var(--ok); }
-
-        .filtro { margin-bottom: 12px; max-width: 320px; }
-
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th { text-align: left; color: var(--suave); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; padding: 8px 10px; border-bottom: 1px solid var(--borda); }
-        td { padding: 10px; border-bottom: 1px solid #edf1f8; vertical-align: top; }
-        td.codigo { font-family: ui-monospace, Menlo, Consolas, monospace; white-space: nowrap; }
-        .nfs { display: flex; flex-wrap: wrap; gap: 6px; }
-
-        .nf {
-            display: inline-flex;
-            align-items: center;
-            gap: 2px;
-            background: #eef2fb;
-            border: 1px solid var(--borda);
-            border-radius: 999px;
-            padding: 2px 4px 2px 10px;
-        }
-
-        .quem { color: var(--suave); font-size: 12px; }
-        .vazio { color: var(--suave); font-size: 14px; padding: 12px 0; }
-
-        @media (max-width: 720px) {
-            .linha { grid-template-columns: 1fr; }
-            header { flex-direction: column; align-items: flex-start; }
+        @media (max-width: 640px) {
+            .titulo-secao { flex-direction: column; align-items: stretch; }
+            .filtro { width: 100%; }
+            .pacote { grid-template-columns: 1fr; }
+            .pacote .etiquetas { justify-content: flex-start !important; }
         }
     </style>
 </head>
 
 <body>
-    <header>
-        <h1>📦 Pacotes com várias notas</h1>
-        <a href="rastreio_amostra.html">← Voltar ao rastreio</a>
+    <header class="topo">
+        <div class="topo-conteudo">
+            <a class="voltar" href="rastreio_amostra.html">← Rastreio de amostras</a>
+            <h1>Pacotes</h1>
+            <p>Quando várias notas saem na mesma caixa e a etiqueta leva só uma, junte-as aqui.
+                Elas passam a aparecer no rastreio com o mesmo código.</p>
+        </div>
     </header>
 
     <main>
-        <section class="cartao">
-            <h2>Vincular notas a um pacote</h2>
-            <p class="ajuda">
-                Use quando várias notas fiscais saem no mesmo pacote e a etiqueta foi emitida com uma nota só.
-                Informe o código de rastreio do pacote e as <strong>outras</strong> notas (separadas por vírgula ou espaço).
-                Elas passam a aparecer no site com o mesmo código na próxima vez que a página carregar.
-            </p>
-
-            <form id="formVinculo" autocomplete="off">
-                <div class="linha">
-                    <div>
-                        <label for="codigo">Código de rastreio</label>
-                        <input id="codigo" name="codigo" placeholder="AP000000000BR" maxlength="13" required>
-                    </div>
-                    <div>
-                        <label for="nfs">Notas fiscais do mesmo pacote</label>
-                        <input id="nfs" name="nfs" placeholder="Ex.: 529713, 529714" required>
-                    </div>
-                    <button id="btnSalvar" type="submit">Vincular</button>
-                </div>
-                <div id="conferencia" class="conferencia"></div>
-                <div id="mensagem" class="mensagem"></div>
+        <section class="bloco" aria-label="Novo pacote">
+            <div class="passo"><span class="numero">1</span> Nota da etiqueta</div>
+            <form id="formBusca" class="busca" autocomplete="off">
+                <input id="nfPrincipal" inputmode="numeric" placeholder="Número da nota que vai na etiqueta" maxlength="12">
+                <button id="btnBuscar" type="submit">Buscar</button>
             </form>
+            <div id="resumo"></div>
+
+            <div id="passo2" class="oculto">
+                <div class="passo passo-2"><span class="numero">2</span> Notas que vão no mesmo pacote</div>
+                <div id="campoChips" class="campo-chips">
+                    <input id="nfExtra" inputmode="numeric" placeholder="Digite a nota e tecle Enter">
+                </div>
+                <div class="dica">Pode colar várias de uma vez, separadas por vírgula ou espaço.</div>
+                <div id="avisoPacote"></div>
+                <div class="acoes">
+                    <button id="btnCancelar" class="btn-secundario" type="button">Cancelar</button>
+                    <button id="btnSalvar" class="btn-principal" type="button" disabled>Salvar pacote</button>
+                </div>
+            </div>
         </section>
 
-        <section class="cartao">
-            <h2>Pacotes vinculados</h2>
-            <p class="ajuda">Cada nota mostra quem fez o vínculo e quando. Remover desfaz só aquela nota.</p>
-            <div class="filtro">
-                <input id="filtro" placeholder="Buscar por código ou nota">
-            </div>
-            <div id="lista"><div class="vazio">Carregando…</div></div>
-        </section>
+        <div class="titulo-secao">
+            <h2>Pacotes montados <span id="contagem"></span></h2>
+            <input id="filtro" class="filtro" placeholder="Buscar nota, cliente ou código">
+        </div>
+        <div id="lista" class="pacotes"><div class="vazio">Carregando…</div></div>
     </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="pacotes.js"></script>
 </body>

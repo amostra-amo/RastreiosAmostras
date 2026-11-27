@@ -1,5 +1,5 @@
 /* =========================================================
-   SITE TESTE — DADOS DIRETO DO PROTHEUS
+   DADOS DIRETO DO PROTHEUS (sem planilha)
    ---------------------------------------------------------
    Troca a planilha publicada no Google Sheets pelo endpoint
    do backend que monta as MESMAS colunas a partir do Protheus:
@@ -40,6 +40,16 @@
                 cache: "no-store",
                 headers: { Authorization: "Bearer " + tokenSessao() }
             });
+        }
+
+        // Toda chamada ao backend leva a sessão do usuário (exceto o login).
+        // Necessário para RASTREIO_EXIGE_LOGIN=1 e para o filtro por usuário.
+        if (url.startsWith(BACKEND) && !/\/(login|cadastro|validar|finalizar)/.test(url.slice(BACKEND.length)) && tokenSessao()) {
+            const cabecalhos = new Headers(opcoes.headers || (recurso instanceof Request ? recurso.headers : undefined));
+            if (!cabecalhos.has("Authorization")) {
+                cabecalhos.set("Authorization", "Bearer " + tokenSessao());
+                opcoes = { ...opcoes, headers: cabecalhos };
+            }
         }
 
         const resposta = await fetchAnterior(recurso, opcoes);
@@ -94,6 +104,8 @@
     }
 
     function selo() {
+        // Selo só no site de teste (Railway); no site oficial não aparece.
+        if (!/railway\.app$|localhost|site\.local/.test(location.hostname)) return;
         if (document.getElementById("selo-fonte-protheus")) return;
         const el = document.createElement("div");
         el.id = "selo-fonte-protheus";

@@ -6598,3 +6598,40 @@ body .sidebar-video-integrada .sidebar-video-panel-nav {
 #conteudoRastreioCorreios .timeline-evento.atual .timeline-descricao {
     color: #0f2747;
 }
+
+
+/* =========================================================
+   TEMA ADMIN1
+   Grafite com acento verde-água. Herda as regras do tema
+   direto (body.tema-direto.tema-admin) e troca só as cores.
+========================================================= */
+
+body.tema-direto.tema-admin {
+    --cor-primaria: #2dd4bf;
+    --cor-secundaria: #0b0f17;
+    --cor-barra: linear-gradient(
+        100deg,
+        #0b0f17,
+        #1f2937,
+        #111827
+    );
+    --cor-menu: #1f2937;
+    --cor-fnotificacao: rgba(17, 24, 39, 0.95);
+    --cor-btntrocarvend: #14b8a6;
+    --cor-fundo: #161d29;
+    --cor-btnfechar: #f87171;
+    --cor-tex-notificacao: #f3f4f6;
+
+    --cor-sidebar: #1f2937;
+    --cor-texto-sidebar: #ffffff;
+    --cor-borda-sidebar: rgba(255, 255, 255, 0.10);
+    --cor-sidebar-hover: rgba(45, 212, 191, 0.14);
+    --cor-sidebar-ativo: rgba(45, 212, 191, 0.26);
+    --cor-sidebar-indicador: #2dd4bf;
+
+    --sidebar-clara-acento: #14b8a6;
+    --sidebar-clara-acento-claro: #ecfdf9;
+    --sidebar-clara-acento-hover: #d5f7f0;
+    --sidebar-clara-texto: #0f3d3a;
+    --sidebar-clara-background: #c9d1d9;
+}

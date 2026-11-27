@@ -1325,6 +1325,8 @@ async function aplicarFiltroSupervisao() {
     // indisponibilidade/latência da API nunca impeça a tela de abrir.
     filtrar();
     atualizarNotificacoes();
+    lembrarTema();
+    requestAnimationFrame(() => setTimeout(esconderCarregamento, 150));
 
     atualizarRastreiosAgora()
         .then(() => {
@@ -1781,6 +1783,23 @@ document.addEventListener(
    TEMA E MARCA
 ========================================================= */
 
+/* Guarda o tema aplicado para a próxima abertura já começar nele
+   (a tela de carregamento usa as mesmas cores). */
+function lembrarTema() {
+    try {
+        localStorage.setItem("temaRastreio", document.body.className || "");
+    } catch (erro) {}
+}
+
+function esconderCarregamento() {
+    const tela = document.getElementById("telaCarregando");
+    if (!tela || tela.classList.contains("saindo")) return;
+    tela.classList.add("saindo");
+    setTimeout(() => tela.remove(), 450);
+}
+
+window.esconderCarregamento = esconderCarregamento;
+
 function aplicarTemaEMarca(
     acessoTotal,
     dadosVendedora
@@ -1839,6 +1858,31 @@ function aplicarTemaEMarca(
 
         return;
 
+    }
+
+
+    /*
+       ADMIN1 — tema próprio (herda o tema direto e troca as cores)
+    */
+
+    const codigoAtual = String(
+        sessionStorage.getItem("codigoVendedor") ||
+        localStorage.getItem("codigoVendedor") ||
+        ""
+    ).trim().toUpperCase();
+
+    if (codigoAtual === "ADMIN1" && !acessoTotal) {
+
+        document.body.className = "";
+        document.body.classList.add("tema-direto", "tema-admin");
+
+        if (logo) {
+            logo.src = "/Imagens/Logo - Grupo 4k - Branco.png";
+        }
+
+        window.marcaLogada = "ADMIN";
+        lembrarTema();
+        return;
     }
 
 

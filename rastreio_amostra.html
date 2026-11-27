@@ -16,6 +16,35 @@
 
     <title>Rastreamento</title>
 
+    <!-- Tela de carregamento: cobre a página até o tema e os dados ficarem prontos -->
+    <style>
+        #telaCarregando {
+            position: fixed; inset: 0; z-index: 100000;
+            display: grid; place-items: center;
+            background: radial-gradient(circle at top center, #183b68 0%, #0d2440 45%, #07182d 100%);
+            transition: opacity .4s ease, visibility .4s ease;
+        }
+        html[data-tema~="tema-quatrok"] #telaCarregando { background: linear-gradient(160deg, #173f9e, #0b3d91 60%, #082d6b); }
+        html[data-tema~="tema-luara"] #telaCarregando { background: linear-gradient(160deg, #ec407a, #c2185b 60%, #8e1043); }
+        html[data-tema~="tema-admin"] #telaCarregando { background: radial-gradient(circle at top center, #1f2937 0%, #111827 55%, #0b0f17 100%); }
+        #telaCarregando.saindo { opacity: 0; visibility: hidden; }
+        .carregando-caixa { display: grid; justify-items: center; gap: 18px; color: rgba(255,255,255,.92); font: 500 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; letter-spacing: .02em; }
+        .carregando-marca { text-align: center; font-size: 15px; letter-spacing: .32em; text-transform: lowercase; opacity: .85; }
+        .carregando-marca strong { display: block; font-size: 26px; letter-spacing: .06em; text-transform: uppercase; opacity: 1; }
+        .carregando-anel { width: 42px; height: 42px; border-radius: 50%; border: 3px solid rgba(255,255,255,.18); border-top-color: #fff; animation: girar .9s linear infinite; }
+        html[data-tema~="tema-admin"] .carregando-anel { border-top-color: #2dd4bf; }
+        .carregando-texto { opacity: .7; font-size: 13px; }
+        @keyframes girar { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .carregando-anel { animation-duration: 2.5s; } }
+    </style>
+    <script>
+        // Usa o último tema já na abertura (evita abrir num tema e trocar depois)
+        try {
+            var temaSalvo = localStorage.getItem("temaRastreio") || "";
+            if (temaSalvo) document.documentElement.setAttribute("data-tema", temaSalvo);
+        } catch (e) {}
+    </script>
+
 
     <!-- =========================================================
          FAVICON
@@ -50,6 +79,19 @@
 
 
 <body>
+
+    <div id="telaCarregando" role="status" aria-live="polite">
+        <div class="carregando-caixa">
+            <div class="carregando-marca">grupo<strong>Quatro K</strong></div>
+            <div class="carregando-anel" aria-hidden="true"></div>
+            <div class="carregando-texto">Carregando rastreios…</div>
+        </div>
+    </div>
+    <script>
+        // Segurança: nunca deixar a tela de carregamento presa
+        setTimeout(function () { window.esconderCarregamento && window.esconderCarregamento(); var t = document.getElementById("telaCarregando"); if (t) t.remove(); }, 12000);
+        try { var tc = localStorage.getItem("temaRastreio"); if (tc) document.body.className = tc; } catch (e) {}
+    </script>
 
 
     <!-- =========================================================
